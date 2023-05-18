@@ -91,17 +91,23 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         });
     });
 
-    // socket.on('leaveRoom', (roomId) => {
-    //   socket.leave(roomId);
+    
+socket.on('leaveRoom', (roomId) => {
+      socket.leave(roomId);
 
-    //   if (usersInRooms[roomId]) {
-    //     const index = usersInRooms[roomId].indexOf(socket.id);
-    //     if (index !== -1) {
-    //       usersInRooms[roomId].splice(index, 1);
-    //     }
-    //   }
-    //   console.log('Usuário', socket.id, 'saiu da sala:', roomId);
-    // });
+      Room.findOne({ roomId }).exec()
+        .then((room) => {
+          if (room) {
+            const index = room.users.indexOf(socket.id);
+            if (index !== -1) {
+              room.users.splice(index, 1);
+              room.save();
+            }
+            console.log('Usuário', socket.id, 'saiu da sala:', roomId);
+          }
+        });
+    });
+
     socket.on('sendMessage', (roomId, message) => {
       io.to(roomId).emit('receiveMessage', socket.id, message);
     });
