@@ -23,7 +23,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
 
   const Room = mongoose.model('Room', roomSchema);
 
-  const usersInRooms = {};
+  // const usersInRooms = {};
 
   io.on('connection', (socket) => {
     console.log('Novo usuário conectado:', socket.id);
@@ -37,7 +37,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
           .then((room) => {
             if (room.length === 0) {
               Room.create({
-                roomId, roomName, password, link, isFull: false,
+                roomId, roomName, password, link, isFull: false, hasPassword: !!(password && password.length > 0),
               })
                 .then(() => {
                   console.log('Sala criada com sucesso:', roomName);
@@ -54,38 +54,54 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     });
 
     socket.on('joinRoom', (roomId, password) => {
-      if (usersInRooms[roomId] && usersInRooms[roomId].includes(socket.id)) {
-        console.log('Usuário já está na sala:', roomId);
-        return;
-      }
       Room.findOne({ roomId }).exec()
         .then((room) => {
-          if (room) {
-            if (room.password && room.password === password) {
-              socket.join(roomId);
-              if (!usersInRooms[roomId]) {
-                usersInRooms[roomId] = [];
+          if (room && room.users.length <= 4 && room.isFull === false) {
+            if (room.password.length > 0 && room.password === password) {
+              if (room.users.includes(socket.id)) {
+                console.log('Usuário já está na sala:', roomId);
+                socket.emit('joined', false);
+                return;
               }
-              usersInRooms[roomId].push(socket.id);
+
+              socket.join(roomId);
+              room.users.push(socket.id);
+              if (room.users.length === 4) room.isFull = true;
+              room.save();
               console.log('Usuário', socket.id, 'entrou na sala:', room.roomName);
+              socket.emit('joined', true);
+            } else if (room.password.length === 0) {
+              if (room.users.includes(socket.id)) {
+                console.log('Usuário já está na sala:', roomId);
+                socket.emit('joined', false);
+                return;
+              }
+
+              socket.join(roomId);
+              room.users.push(socket.id);
+              if (room.users.length === 4) room.isFull = true;
+              room.save();
+              console.log('Usuário', socket.id, 'entrou na sala:', room.roomName);
+              socket.emit('joined', true);
             } else {
               console.log('Senha incorreta!');
+              socket.emit('joined', false);
             }
           }
         });
     });
 
-    socket.on('leaveRoom', (roomId) => {
-      socket.leave(roomId);
+    // socket.on('leaveRoom', (roomId) => {
+    //   socket.leave(roomId);
 
-      if (usersInRooms[roomId]) {
-        const index = usersInRooms[roomId].indexOf(socket.id);
-        if (index !== -1) {
-          usersInRooms[roomId].splice(index, 1);
-        }
-      }
-      console.log('Usuário', socket.id, 'saiu da sala:', roomId);
-    });
+    //   if (usersInRooms[roomId]) {
+    //     const index = usersInRooms[roomId].indexOf(socket.id);
+    //     if (index !== -1) {
+    //       usersInRooms[roomId].splice(index, 1);
+    //     }
+    //   }
+    //   console.log('Usuário', socket.id, 'saiu da sala:', roomId);
+    // });
     socket.on('sendMessage', (roomId, message) => {
       io.to(roomId).emit('receiveMessage', socket.id, message);
     });
@@ -93,7 +109,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     socket.on('getRooms', async () => {
       await Room.find({}).exec()
         .then((rooms) => {
-          if (rooms.length > 0) socket.emit('updateRooms', rooms.map((room) => room.roomName), rooms.map((room) => room.users.length));
+          if (rooms.length > 0) socket.emit('updateRooms', rooms.map((room) => room.roomName), rooms.map((room) => room.users.length), rooms.map((room) => room.roomId), rooms.map((room) => room.hasPassword), rooms.map((room) => room.isFull));
           else socket.emit('updateRooms', 'Não existem salas criadas!');
         });
     });

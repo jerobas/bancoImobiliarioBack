@@ -7,4 +7,5 @@ export const roomSchema = new mongoose.Schema({
   link: String,
   users: [],
   isFull: Boolean,
+  hasPassword: Boolean,
 });
