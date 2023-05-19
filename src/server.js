@@ -116,7 +116,12 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               numberOfRooms: rooms.length,
               rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
             });
-          } else io.emit('updateRooms', 'Não existem salas criadas!');
+          } else{
+            io.emit('updateRooms',{
+              numberOfRooms: 0,
+              rooms: null
+            });
+          }
         })
         .catch((error) => {
           console.log('Erro ao buscar sala:', error);
