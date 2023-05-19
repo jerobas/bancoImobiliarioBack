@@ -91,8 +91,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         });
     });
 
-    
-socket.on('leaveRoom', (roomId) => {
+    socket.on('leaveRoom', (roomId) => {
       socket.leave(roomId);
 
       Room.findOne({ roomId }).exec()
@@ -115,8 +114,13 @@ socket.on('leaveRoom', (roomId) => {
     socket.on('getRooms', async () => {
       await Room.find({}).exec()
         .then((rooms) => {
-          if (rooms.length > 0) socket.emit('updateRooms', rooms.map((room) => room.roomName), rooms.map((room) => room.users.length), rooms.map((room) => room.roomId), rooms.map((room) => room.hasPassword), rooms.map((room) => room.isFull));
-          else socket.emit('updateRooms', 'Não existem salas criadas!');
+          let response = [];
+          if (rooms.length > 0) {
+            socket.emit('updateRooms', {
+              numberOfRooms: rooms.length,
+              rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length])
+            })
+          } else socket.emit('updateRooms', 'Não existem salas criadas!');
         });
     });
 
