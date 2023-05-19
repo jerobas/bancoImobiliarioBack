@@ -23,8 +23,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
 
   const Room = mongoose.model('Room', roomSchema);
 
-  // const usersInRooms = {};
-
   io.on('connection', (socket) => {
     console.log('Novo usuário conectado:', socket.id);
 
@@ -47,7 +45,9 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               socket.emit('roomCreated', `A sala: ${roomName} já existe`);
             }
           })
-          .catch((error) => console.log(error));
+          .catch((error) => {
+            console.log('Erro ao buscar sala:', error);
+          });
       } else {
         socket.emit('roomCreated', 'Você precisa dar um nome para a sala!');
       }
@@ -58,27 +58,27 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         .then((room) => {
           if (room && room.users.length <= 4 && room.isFull === false) {
             if (room.password.length > 0 && room.password === password) {
-              if (room.users.includes(userEmail)) {
+              if (room.users.find((user) => user.userEmail === userEmail)) {
                 console.log('Usuário já está na sala:', room.roomName);
                 socket.emit('joined', false);
                 return;
               }
 
               socket.join(roomId);
-              room.users.push(userEmail);
+              room.users.push({ userEmail, socketId: socket.id });
               if (room.users.length === 4) room.isFull = true;
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
               socket.emit('joined', true);
             } else if (room.password.length === 0) {
-              if (room.users.includes(userEmail)) {
+              if (room.users.find((user) => user.userEmail === userEmail)) {
                 console.log('Usuário já está na sala:', room.roomName);
                 socket.emit('joined', false);
                 return;
               }
 
               socket.join(roomId);
-              room.users.push(userEmail);
+              room.users.push({ userEmail, socketId: socket.id });
               if (room.users.length === 4) room.isFull = true;
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
@@ -88,30 +88,23 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               socket.emit('joined', false);
             }
           }
+        })
+        .catch((error) => {
+          console.log('Erro ao buscar sala:', error);
         });
     });
 
     socket.on('leaveRoom', ({ roomId, userEmail }) => {
-      console.log(roomId, userEmail);
       socket.leave(roomId);
-
-      Room.findOne({ roomId }).exec()
-        .then((room) => {
-          if (room) {
-            const index = room.users.indexOf(userEmail);
-            if (index !== -1) {
-              room.users.splice(index, 1);
-              room.save();
-            }
-            console.log('Usuário', userEmail, 'saiu da sala:', roomId);
-          }
-        });
+      removeUserFromRoom(socket.id);
     });
 
     socket.on('sendMessage', async (roomId, message, user) => {
       await Room.findOne({ roomId }).exec()
-        .then((rooms) => {
-          if (rooms.users.includes(user)) io.to(roomId).emit('receiveMessage', message, user);
+        .then((room) => {
+          if (room && room.users.find((u) => u.userEmail === user && u.socketId === socket.id)) {
+            io.to(roomId).emit('receiveMessage', message, user);
+          }
         });
     });
 
@@ -124,12 +117,31 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
             });
           } else io.emit('updateRooms', 'Não existem salas criadas!');
+        })
+        .catch((error) => {
+          console.log('Erro ao buscar sala:', error);
         });
     });
 
     socket.on('disconnect', () => {
       console.log('Usuário desconectado:', socket.id);
+      removeUserFromRoom(socket.id);
     });
+
+    async function removeUserFromRoom(socketId) {
+      await Room.findOne({ 'users.socketId': socketId }).exec()
+        .then((room) => {
+          if (room) {
+            const index = room.users.findIndex((user) => user.socketId === socketId);
+            if (index !== -1) {
+              const user = room.users[index];
+              room.users.splice(index, 1);
+              room.save();
+              console.log('Usuário', user.userEmail, 'removido da sala:', room.roomId);
+            }
+          }
+        });
+    }
   });
 });
 
