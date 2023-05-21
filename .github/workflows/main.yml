@@ -29,5 +29,5 @@ jobs:
     - name: chmod
       run: sudo chmod 400 key.pem
       
-    - name: Run yarn
-      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "mkdir melted"
+    - name: Run API
+      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "yarn; pm2 stop all; pm2 delete all; pm2 start src/server.js"
