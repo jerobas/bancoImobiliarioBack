@@ -9,8 +9,10 @@ export const roomSchema = new mongoose.Schema({
   isFull: Boolean,
   hasPassword: Boolean,
   diceWinners: [],
-  states: {
+  state: {
     type: String, // turn || wait || winner || rollingDices
     duration: String
-  }
+  },
+}, {
+  typeKey: '$type'
 });

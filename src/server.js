@@ -20,7 +20,7 @@ const { PORT } = process.env;
 
 mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
   console.log('Connected successfully to MongoDB');
-  
+
   const Room = mongoose.model('Room', roomSchema);
 
   Room.deleteMany({})
@@ -39,7 +39,16 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
           .then((room) => {
             if (room.length === 0) {
               Room.create({
-                roomId, roomName, password, link, isFull: false, hasPassword: !!(password && password.length > 0),
+                roomId,
+                roomName,
+                password,
+                link,
+                isFull: false,
+                hasPassword: !!(password && password.length > 0),
+                state: {
+                  type: 'idle',
+                  duration: 'indeterminate',
+                },
               })
                 .then(() => {
                   console.log('Sala criada com sucesso:', roomName);
@@ -70,7 +79,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               }
 
               socket.join(roomId);
-              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: []});
+              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: [] });
               if (room.users.length === 4) room.isFull = true;
               room.save();
               getAllRooms()
@@ -83,7 +92,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               }
 
               socket.join(roomId);
-              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: []});
+              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: [] });
               if (room.users.length === 4) room.isFull = true;
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
@@ -100,8 +109,8 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         });
     });
 
-    socket.on('getPlayersStates', async(roomId) => {
-      await Room.findOne({roomId: roomId}).exec()
+    socket.on('getPlayersStates', async (roomId) => {
+      await Room.findOne({ roomId: roomId }).exec()
         .then((room) => {
           io.to(roomId).emit('playersStates', room?.users)
         })
@@ -131,7 +140,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     });
 
     socket.on('getPlayers', async (roomId) => {
-      await Room.findOne({roomId: roomId}).exec()
+      await Room.findOne({ roomId: roomId }).exec()
         .then((room) => {
           io.to(roomId).emit('returnPlayer', room?.users.length)
         })
@@ -160,7 +169,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
           }
         });
     }
-    async function getAllRooms(){
+    async function getAllRooms() {
       await Room.find({}).exec()
         .then((rooms) => {
           if (rooms.length > 0) {
@@ -168,8 +177,8 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               numberOfRooms: rooms.length,
               rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
             });
-          } else{
-            io.emit('updateRooms',{
+          } else {
+            io.emit('updateRooms', {
               numberOfRooms: 0,
               rooms: null
             });
