@@ -117,7 +117,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     socket.on('getPlayers', async (roomId) => {
       await Room.findOne({roomId: roomId}).exec()
         .then((room) => {
-          socket.emit('returnPlayer', room.map(data => data.users.length))
+          io.to(roomId).emit('returnPlayer', room?.users.length)
         })
     })
 
