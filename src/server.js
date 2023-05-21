@@ -69,6 +69,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               if (room.users.length === 4) room.isFull = true;
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
+              getAllRooms()
               socket.emit('joined', true);
             } else if (room.password.length === 0) {
               if (room.users.find((user) => user.userEmail === userEmail)) {
@@ -83,6 +84,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
               socket.emit('joined', true);
+              getAllRooms()
             } else {
               console.log('Senha incorreta!');
               socket.emit('joined', false);
