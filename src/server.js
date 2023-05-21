@@ -18,6 +18,8 @@ const io = new Server(httpServer, {
 const mongoURL = process.env.MONGOURL_ATLAS;
 const { PORT } = process.env;
 
+const Room = mongoose.model('Room', roomSchema);
+
 async function deleteAllRooms(){
   try {
     await Room.deleteMany({})
