@@ -22,9 +22,12 @@ jobs:
         REMOTE_USER: ${{secrets.REMOTE_USER}}
         TARGET: ${{secrets.TARGET_DIR}}
         EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
+        
+    - name: create pem
+      run: echo ${{secrets.EC2_SSH_KEY}} > key.pem
       
     - name: Run yarn
-      run: ssh -i ${{secrets.EC2_SSH_KEY}} ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}
+      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}
     
     - name: mkdir
       run: mkdir Melted
