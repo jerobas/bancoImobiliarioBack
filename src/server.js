@@ -15,7 +15,7 @@ const io = new Server(httpServer, {
   },
 });
 
-const mongoURL = process.env.MONGOURL;
+const mongoURL = process.env.MONGOURL_ATLAS;
 const { PORT } = process.env;
 
 mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
@@ -39,7 +39,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               })
                 .then(() => {
                   console.log('Sala criada com sucesso:', roomName);
-                  socket.emit('roomCreated', link);
+                  getAllRooms()
                 });
             } else {
               socket.emit('roomCreated', `A sala: ${roomName} já existe`);
@@ -108,24 +108,8 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         });
     });
 
-    socket.on('getRooms', async () => {
-      await Room.find({}).exec()
-        .then((rooms) => {
-          if (rooms.length > 0) {
-            io.emit('updateRooms', {
-              numberOfRooms: rooms.length,
-              rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
-            });
-          } else{
-            io.emit('updateRooms',{
-              numberOfRooms: 0,
-              rooms: null
-            });
-          }
-        })
-        .catch((error) => {
-          console.log('Erro ao buscar sala:', error);
-        });
+    socket.on('getRooms', () => {
+      getAllRooms()
     });
 
     socket.on('disconnect', () => {
@@ -146,6 +130,22 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
             }
           }
         });
+    }
+    async function getAllRooms(){
+      await Room.find({}).exec()
+        .then((rooms) => {
+          if (rooms.length > 0) {
+            io.emit('updateRooms', {
+              numberOfRooms: rooms.length,
+              rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
+            });
+          } else{
+            io.emit('updateRooms',{
+              numberOfRooms: 0,
+              rooms: null
+            });
+          }
+        })
     }
   });
 });
