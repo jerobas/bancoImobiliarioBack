@@ -23,6 +23,8 @@ jobs:
         TARGET: ${{secrets.TARGET_DIR}}
         EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
       
-      
     - name: Run yarn
-      run: echo pwd
+      run: ssh -i ${{secrets.EC2_SSH_KEY}} ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}
+    
+    - name: mkdir
+      run: mkdir Melted
