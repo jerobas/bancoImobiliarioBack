@@ -117,7 +117,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
 
     socket.on('startGame', async (roomId) => {
       const state = {
-        type: 'game starting',
+        type: 'Game starting...',
         duration: 'indeterminate',
       }
 
