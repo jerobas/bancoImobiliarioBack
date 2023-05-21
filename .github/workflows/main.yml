@@ -24,7 +24,7 @@ jobs:
         EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
         
     - name: Join in dir
-      run: cd ${{secrets.TARGET_DIR}}
+      run: cd /home/ec2-user
     
     - name: Run yarn
       run: yarn
