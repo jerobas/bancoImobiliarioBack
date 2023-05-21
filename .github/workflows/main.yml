@@ -22,12 +22,7 @@ jobs:
         REMOTE_USER: ${{secrets.REMOTE_USER}}
         TARGET: ${{secrets.TARGET_DIR}}
         EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
-        
-    - name: Melted
-      run: mkdir melted
+      
       
     - name: Run yarn
-      run: yarn
-      
-    - name: Start API
-      run: pm2 start ./src/server.js
+      run: echo pwd
