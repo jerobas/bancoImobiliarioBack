@@ -18,26 +18,14 @@ const io = new Server(httpServer, {
 const mongoURL = process.env.MONGOURL_ATLAS;
 const { PORT } = process.env;
 
-const Room = mongoose.model('Room', roomSchema);
-
-async function deleteAllRooms(){
-  try {
-    await Room.deleteMany({})
-  } catch (error) {
-    console.error(error)
-  } finally {
-    mongoose.disconnect()
-  }
-}
-
-
-
 mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
   console.log('Connected successfully to MongoDB');
   
   const Room = mongoose.model('Room', roomSchema);
 
-  deleteAllRooms()
+  Room.deleteMany({})
+    .then(() => console.log('As rooms foram deletadas!'))
+    .catch(err => console.log(err))
 
   io.on('connection', (socket) => {
     console.log('Novo usuário conectado:', socket.id);
