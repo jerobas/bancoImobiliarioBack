@@ -23,14 +23,11 @@ jobs:
         TARGET: ${{secrets.TARGET_DIR}}
         EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
         
+    - name: Melted
+      run: mkdir melted
+      
     - name: Run yarn
       run: yarn
       
-    - name: PM2 stop
-      run: pm2 stop all
-    
-    - name: PM2 Delete
-      run: pm2 delete all
-    
     - name: Start API
       run: pm2 start ./src/server.js
