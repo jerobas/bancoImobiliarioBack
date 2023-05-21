@@ -30,7 +30,6 @@ jobs:
       run: sudo chmod 400 key.pem
       
     - name: Run yarn
-      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}
-    
-    - name: mkdir
-      run: mkdir Melted
+      run: |
+         ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}
+         mkdir Melted
