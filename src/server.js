@@ -66,7 +66,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
       }
     });
 
-
     socket.on('joinRoom', async ({ roomId, password, userEmail }) => {
       await Room.findOne({ roomId }).exec()
         .then((room) => {
@@ -116,14 +115,14 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         })
     })
 
-    // socket.on('startGame', async(RoomId) => {
-    //   await Room.findOneAndUpdate({roomId: RoomId}, $set>{'state.type': 'rollingDices'}).exec()
-    //   await Room.findOne({roomId: RoomId}).exec()
-    //   .then((room) => {
-    //     io.to(RoomId).emit('startGame', room)
-    //   })
-    // })
+    socket.on('startGame', async (roomId) => {
+      const state = {
+        type: 'game starting',
+        duration: 'indeterminate',
+      }
 
+      updateRoomState(roomId, state);
+    })
 
     socket.on('leaveRoom', ({ roomId, userEmail }) => {
       socket.leave(roomId);
@@ -184,6 +183,16 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
             });
           }
         })
+    }
+    const systemMessage = (roomId, message) => io.to(roomId).emit('receiveMessage', message, 'Sistema');
+    const updateRoomState = async (roomId, state) => {
+      try {
+        await Room.findOneAndUpdate({ roomId: roomId }, { state })
+        systemMessage(roomId, state.type)
+        io.to(roomId).emit('gameStateUpdated', state)
+      } catch (error) {
+        console.log(error)
+      }
     }
   });
 });
