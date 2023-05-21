@@ -26,3 +26,11 @@ jobs:
     - name: Run yarn
       run: yarn
       
+    - name: PM2 stop
+      run: pm2 stop 0
+    
+    - name: PM2 Delete
+      run: pm2 delete 0
+    
+    - name: Start API
+      run: pm2 start ./src/server.js
