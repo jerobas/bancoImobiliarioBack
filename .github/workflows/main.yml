@@ -26,6 +26,3 @@ jobs:
     - name: Run yarn
       run: yarn
       
-    - name: Run yarn dev
-      run: yarn dev
-    
