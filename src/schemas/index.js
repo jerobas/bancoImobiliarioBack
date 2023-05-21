@@ -8,4 +8,9 @@ export const roomSchema = new mongoose.Schema({
   users: [],
   isFull: Boolean,
   hasPassword: Boolean,
+  diceWinners: [],
+  states: {
+    type: String, // turn || wait || winner || rollingDices
+    duration: String
+  }
 });

@@ -57,6 +57,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
       }
     });
 
+
     socket.on('joinRoom', async ({ roomId, password, userEmail }) => {
       await Room.findOne({ roomId }).exec()
         .then((room) => {
@@ -69,10 +70,9 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               }
 
               socket.join(roomId);
-              room.users.push({ userEmail, socketId: socket.id });
+              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: []});
               if (room.users.length === 4) room.isFull = true;
               room.save();
-              console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
               getAllRooms()
               socket.emit('joined', true);
             } else if (room.password.length === 0) {
@@ -83,7 +83,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               }
 
               socket.join(roomId);
-              room.users.push({ userEmail, socketId: socket.id });
+              room.users.push({ userEmail, socketId: socket.id, position: 0, money: 0, cards: []});
               if (room.users.length === 4) room.isFull = true;
               room.save();
               console.log('Usuário', userEmail, 'entrou na sala:', room.roomName);
@@ -99,6 +99,22 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
           console.log('Erro ao buscar sala:', error);
         });
     });
+
+    socket.on('getPlayersStates', async(roomId) => {
+      await Room.findOne({roomId: roomId}).exec()
+        .then((room) => {
+          io.to(roomId).emit('playersStates', room?.users)
+        })
+    })
+
+    // socket.on('startGame', async(RoomId) => {
+    //   await Room.findOneAndUpdate({roomId: RoomId}, $set>{'state.type': 'rollingDices'}).exec()
+    //   await Room.findOne({roomId: RoomId}).exec()
+    //   .then((room) => {
+    //     io.to(RoomId).emit('startGame', room)
+    //   })
+    // })
+
 
     socket.on('leaveRoom', ({ roomId, userEmail }) => {
       socket.leave(roomId);
