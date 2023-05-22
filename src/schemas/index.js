@@ -10,6 +10,7 @@ export const roomSchema = new mongoose.Schema({
     userName: String,
   },
   users: [],
+  currentTurn: Number,
   isFull: Boolean,
   hasPassword: Boolean,
   diceWinners: [],
