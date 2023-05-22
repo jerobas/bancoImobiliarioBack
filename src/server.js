@@ -122,6 +122,14 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         })
     })
 
+    socket.on('getOwner', async (roomId) => {
+      await Room.findOne({ roomId: roomId }).exec()
+        .then((room) => {
+          io.to(roomId).emit('returnOwner', room?.owner)
+        })
+    })
+
+
     socket.on('startGame', async (roomId) => {
       const state = {
         type: 'Game starting...',
