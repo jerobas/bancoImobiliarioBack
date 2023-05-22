@@ -124,6 +124,26 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
       updateRoomState(roomId, state);
     })
 
+
+    socket.on('rollDicesToStart', async ({roomId, value, userEmail}) => {
+      await Room.findOne({roomId: roomId}).exec()
+        .then(async (room) => {
+          for(let i =0; i< room.users.length; i++){
+            if(room.users[i].userEmail === userEmail){
+              room.users[i] = {
+                ...room.users[i],
+                position: value + room.users[i].position,
+              }
+              room.save()
+              break;
+            }
+          }
+          io.to(roomId).emit('playersStates', room?.users)
+        })
+        .catch((err) => console.log(err))
+    
+    })
+
     socket.on('leaveRoom', ({ roomId, userEmail }) => {
       socket.leave(roomId);
       removeUserFromRoom(socket.id);
@@ -144,6 +164,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
           io.to(roomId).emit('returnPlayer', room?.users.length)
         })
     })
+
 
     socket.on('getRooms', () => {
       getAllRooms()
@@ -202,6 +223,18 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         console.log(error)
       }
     }
+    
+    const handleStateGame = async (roomId) => {
+      try {
+        const room = await Room.findOneAndUpdate({roomId: roomId})
+        if(room){
+          // 
+        }
+      }catch(err) {
+
+      }
+    }
+
     const compareStateObjects = (state1, state2) => {
       if (state1.type !== state2.type) return false
       if (state1.duration !== state2.duration) return false
