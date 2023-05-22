@@ -187,12 +187,25 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     const systemMessage = (roomId, message) => io.to(roomId).emit('receiveMessage', message, 'Sistema');
     const updateRoomState = async (roomId, state) => {
       try {
-        await Room.findOneAndUpdate({ roomId: roomId }, { state })
+        const oldRoom = await Room.findOneAndUpdate({ roomId: roomId }, { state })
+        if (!oldRoom) {
+          console.log('Sala não encontrada')
+          throw new Error('Sala não encontrada')
+        }
+        if (compareStateObjects(oldRoom.state, state)) {
+          return console.log('Estado da sala não foi alterado')
+        }
+
         systemMessage(roomId, state.type)
         io.to(roomId).emit('gameStateUpdated', state)
       } catch (error) {
         console.log(error)
       }
+    }
+    const compareStateObjects = (state1, state2) => {
+      if (state1.type !== state2.type) return false
+      if (state1.duration !== state2.duration) return false
+      return true
     }
   });
 });
