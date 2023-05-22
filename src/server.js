@@ -58,7 +58,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
                     userName: owner
                   }
                   updateOwner(createdRoom.roomId, state);
-                  console.log('Sala criada com sucesso:', roomName);
                   socket.emit('roomId', createdRoom.roomId)
                   getAllRooms()
                 })
@@ -235,7 +234,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     });
 
     socket.on('disconnect', () => {
-      console.log('Usuário desconectado:', socket.id);
       removeUserFromRoom(socket.id);
     });
 
@@ -248,7 +246,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
               const user = room.users[index];
               room.users.splice(index, 1);
               room.save();
-              console.log('Usuário', user.userEmail, 'removido da sala:', room.roomId);
             }
           }
         });
@@ -295,25 +292,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         console.log(error)
       }
     }
-    
-    const handleStateGame = async (roomId) => {
-      try {
-        const room = await Room.findOneAndUpdate({roomId: roomId})
-        if(room){
-          // 
-        }
-      }catch(err) {
-
-      }
-    }
-
-    const compareStateObjects = (state1, state2) => {
-      if (state1.type !== state2.type) return false
-      if (state1.duration !== state2.duration) return false
-      return true
-    }
-
-  });
+    });
 });
 
 httpServer.listen(PORT, () => {
