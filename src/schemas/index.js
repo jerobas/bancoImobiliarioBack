@@ -5,6 +5,10 @@ export const roomSchema = new mongoose.Schema({
   roomName: String,
   password: String,
   link: String,
+  owner: {
+    socketId: String,
+    userName: String,
+  },
   users: [],
   isFull: Boolean,
   hasPassword: Boolean,
