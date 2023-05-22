@@ -128,11 +128,19 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     socket.on('rollDicesToStart', async ({roomId, value, userEmail, numberOfCells}) => {
       await Room.findOne({roomId: roomId}).exec()
         .then(async (room) => {
-          for(let i =0; i< room.users.length; i++){
+          for(let i =0; i < room.users.length; i++){
             if(room.users[i].userEmail === userEmail){
-              room.users[i] = {
-                ...room.users[i],
-                position: (value + room.users[i].position) % numberOfCells,
+              if((value + room.users[i].position) >= numberOfCells){
+                room.users[i] = {
+                  ...room.users[i],
+                  position: (value + room.users[i].position) % numberOfCells,
+                  money: Number(Number(room.users[i].money) + 200)
+                }
+              }else{
+                room.users[i] = {
+                  ...room.users[i],
+                  position: (value + room.users[i].position) % numberOfCells,
+                }
               }
               room.save()
               break;
