@@ -129,6 +129,11 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         })
     })
 
+    const rollDices = () => {
+      let d1 = Math.floor(Math.random() * 6) + 1;
+      let d2 = Math.floor(Math.random() * 6) + 1;
+      return d1 + d2
+    } 
 
     socket.on('startGame', async (roomId) => {
       const state = {
@@ -136,6 +141,24 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         duration: 'indeterminate',
       }
 
+      await Room.findOne({ roomId: roomId }).exec()
+        .then(async (room) => {
+          let numberOfPLayers = room?.users.length
+          const order = []
+          for(let i = 0; i<numberOfPLayers; i++){
+            let resp = rollDices()
+            order.push({
+              socketId: room?.users[i].socketId,
+              orderInTurn: resp
+            })
+          }
+          order.sort((a,b) => b.orderInTurn - a.orderInTurn)
+          for(let i = 0; i < numberOfPLayers; i++){
+            await room.diceWinners.push(order[i].socketId)
+          }
+          await room.save()
+          io.to(roomId).emit('orderOfTurns', room.diceWinners)
+        })
       updateRoomState(roomId, state);
     })
 
@@ -166,6 +189,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         .catch((err) => console.log(err))
     
     })
+    
 
     socket.on('leaveRoom', ({ roomId, userEmail }) => {
       socket.leave(roomId);
