@@ -11,17 +11,6 @@ jobs:
     steps:
     - name: Checkout the files
       uses: actions/checkout@v3
-      
-    - name: Copy files with SSH
-      uses: easingthemes/ssh-deploy@main
-      env:
-        SSH_PRIVATE_KEY: ${{secrets.EC2_SSH_KEY}}
-        ARGS: "-rltgoDzvO"
-        SOURCE: "./"
-        REMOTE_HOST: ${{secrets.REMOTE_HOST}}
-        REMOTE_USER: ${{secrets.REMOTE_USER}}
-        TARGET: ${{secrets.TARGET_DIR}}
-        EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
         
     - name: Create PEM file
       run: echo "${{secrets.EC2_SSH_KEY}}" > key.pem
@@ -33,4 +22,4 @@ jobs:
       run: scp -i key.pem -r $GITHUB_WORKSPACE ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}:/home/${{secrets.REMOTE_USER}}/
         
     - name: Run API
-      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "yarn; pm2 stop all; pm2 delete all; pm2 start src/server.js"
+      run: ssh -i key.pem ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "cd bancoImobiliarioBack; yarn; sudo systemctl restart lopoly"
