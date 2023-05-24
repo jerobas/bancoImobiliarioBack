@@ -16,7 +16,7 @@ jobs:
       run: echo "${{secrets.EC2_SSH_KEY}}" > key.pem
     
     - name: Chmod created key.pem file
-      run: sudo chmod 777 key.pem
+      run: sudo chmod 400 key.pem
     
     - name: Copy files with SSH
       run: scp -i key.pem -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}:/home/${{secrets.REMOTE_USER}}
