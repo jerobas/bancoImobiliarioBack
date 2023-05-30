@@ -60,11 +60,11 @@ const removeUser = async (roomId, socketId) => {
 const addUser = async (roomId, socketId, username, userIP) => {
     const room = await find(roomId);
     console.log(room)
-    let user = await room.users.find((u) => u.socketId === socketId);
-    console.log(user)
-    if (user) throw new Error('User already in room');
-    user = await Users.create({ socketId, roomId, username, userIP});
-    room.users.push(user);
+    // let user = await room.users.find((u) => u.socketId === socketId);
+    // console.log(user)
+    // if (user) throw new Error('User already in room');
+    await Users.create({ socketId, roomId, username, userIP});
+    // room.users.push(user);
     await room.save();
 };
 
