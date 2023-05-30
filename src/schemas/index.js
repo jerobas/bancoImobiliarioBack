@@ -1,10 +1,8 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable indent */
-
 import mongoose from 'mongoose';
 
 export const userSchema = new mongoose.Schema({
   socketId: String,
+  userIP: String,
   userName: String,
   currentRoom: { type: mongoose.Schema.Types.String, ref: 'Rooms' },
   joinedAt: {
@@ -23,7 +21,6 @@ export const roomSchema = new mongoose.Schema({
   roomId: String,
   roomName: String,
   password: String,
-  link: String,
 
   // user-related
   owner: String,
