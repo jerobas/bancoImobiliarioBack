@@ -61,11 +61,11 @@ const removeUser = async (roomId, socketId) => {
     await user.remove();
 };
 
-const addUser = async (roomId, socketId, username) => {
+const addUser = async (roomId, socketId, username, userIP) => {
     const room = await find(roomId);
     let user = await room.users.find((u) => u.socketId === socketId);
     if (user) throw new Error('User already in room');
-    user = await Users.create({ socketId, roomId, username });
+    user = await Users.create({ socketId, roomId, username, userIP});
     room.users.push(user);
     await room.save();
 };

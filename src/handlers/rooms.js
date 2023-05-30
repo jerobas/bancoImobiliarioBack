@@ -9,8 +9,7 @@ async function removeUserFromRoom(roomId, socketId) {
 
 async function getAllRooms(socket) {
     const rooms = await Rooms.getAll();
-    if (rooms.length > 0) {
-        console.log(rooms);
+    if (rooms && rooms.length > 0) {
         socket.emit('updateRooms', {
             numberOfRooms: rooms.length,
             rooms: rooms.map((room) => [
@@ -18,7 +17,7 @@ async function getAllRooms(socket) {
                 room.roomId,
                 room.hasPassword,
                 room.isFull,
-                room.users.length,
+                room.users?.length,
             ]),
         });
     } else {
@@ -59,7 +58,7 @@ async function getAllRooms(socket) {
 export const roomHandlers = {
     create: socket => async ({ roomName, password }) => {
         try {
-            const createdRoom = await Rooms.create({ roomName, password, owner: socket.id });
+            const createdRoom = await Rooms.create({ roomName, password, owner: socket.handshake.address });
             socket.emit('roomId', createdRoom.roomId);
             console.log('======CREATE======');
             getAllRooms(socket);
@@ -78,9 +77,10 @@ export const roomHandlers = {
             if (room.password.length > 0 && room.password !== password) return socket.emit('joined', false);
             if (room.users.find((user) => user.userEmail === userEmail)) return socket.emit('joined', false);
 
-            Rooms.addUser(roomId, userEmail, socket.id);
+            Rooms.addUser(roomId, userEmail, socket.id, socket.handshake.address);
             socket.join(roomId);
 
+            await room.save()
             socket.emit('joined', true);
             console.log('======JOIN======');
             return getAllRooms(socket);

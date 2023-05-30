@@ -10,6 +10,7 @@ import { Server } from 'socket.io';
 
 import { startRoomHandlers, roomWhenDisconnect } from './handlers/rooms.js';
 import { roomSchema, userSchema } from './schemas/index.js';
+import {chatService} from './handlers/chat.js'
 
 dotenv.config();
 const mongoURL = process.env.MONGOURL_ATLAS;
@@ -23,9 +24,10 @@ const io = new Server(httpServer, {
 });
 
 const main = (socket) => {
-  console.log('Novo usuário conectado:', socket.id);
+  console.log('Novo usuário conectado:', socket.id, socket.handshake.address);
 
   startRoomHandlers(socket);
+  chatService(socket, io)
 
   socket.on('disconnect', () => {
     roomWhenDisconnect(0, socket);

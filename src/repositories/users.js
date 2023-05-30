@@ -33,20 +33,22 @@ const remove = async (socketId) => {
 
 const removeAll = async () => Users.deleteMany({});
 
-const createIfDontExist = async ({ socketId, roomId, username }) => new Users({
-    socketId,
+const createIfDontExist = async ({ socketId, roomId, username, userIP }) => new Users({
+    socketId: username,
     currentRoom: roomId,
-    userName: username,
+    userName: socketId,
+    userIP: userIP
 }).save();
+    
+    
 
-const create = async ({ socketId, roomId, username }) => {
+const create = async ({ socketId, roomId, username, userIP }) => {
     const user = await findIfExists(socketId);
     if (user) {
         Rooms.removeUser(user.currentRoom, socketId);
         return user;
     }
-
-    return createIfDontExist({ socketId, roomId, username });
+    return createIfDontExist({ username, roomId, socketId, userIP });
 };
 
 export {

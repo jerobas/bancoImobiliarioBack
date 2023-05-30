@@ -34,14 +34,14 @@ export const roomSchema = new mongoose.Schema({
   // game-related
   currentTurn: Number,
   state: {
-    type: String, // turn || wait || winner || rollingDices
+    type: String,
     duration: String,
   },
 }, {
   virtuals: {
     isFull: {
       get() {
-        return this.users.length === this.maxUsers;
+        return this.users?.length === this.maxUsers;
       },
     },
     hasPassword: {
