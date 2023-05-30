@@ -1,16 +1,12 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable import/no-cycle */
 /* eslint-disable indent */
-
-import { mongoose } from 'mongoose';
 import { nanoid } from 'nanoid';
 
 import States from '../constants/rooms/states.js';
-import { roomSchema } from '../schemas/index.js';
 import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
-
-const Rooms = mongoose.model('Rooms', roomSchema);
+import {Rooms } from '../models/index.js'
 
 const getAll = async () => Rooms.find({}).exec();
 
@@ -63,7 +59,9 @@ const removeUser = async (roomId, socketId) => {
 
 const addUser = async (roomId, socketId, username, userIP) => {
     const room = await find(roomId);
+    console.log(room)
     let user = await room.users.find((u) => u.socketId === socketId);
+    console.log(user)
     if (user) throw new Error('User already in room');
     user = await Users.create({ socketId, roomId, username, userIP});
     room.users.push(user);

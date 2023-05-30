@@ -1,13 +1,8 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable indent */
 /* eslint-disable import/no-cycle */
-
-import { mongoose } from 'mongoose';
-
-import { userSchema } from '../schemas/index.js';
 import * as Rooms from './rooms.js';
-
-const Users = mongoose.model('Users', userSchema);
+import {Users} from '../models/index.js'
 
 const findIfExists = async (socketId) => {
     const user = await Users.findOne({ socketId }).exec();

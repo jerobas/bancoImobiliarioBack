@@ -4,7 +4,7 @@ export const userSchema = new mongoose.Schema({
   socketId: String,
   userIP: String,
   userName: String,
-  currentRoom: { type: mongoose.Schema.Types.String, ref: 'Rooms' },
+  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   joinedAt: {
     type: Date,
     default: Date.now,
@@ -24,7 +24,7 @@ export const roomSchema = new mongoose.Schema({
 
   // user-related
   owner: String,
-  users: [{ $type: mongoose.Schema.Types.String, ref: 'Users' }],
+  users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   diceWinners: [Number],
   maxUsers: {
     $type: Number,

@@ -1,6 +1,6 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable indent */
-import * as Rooms from '../repositories/rooms.js';
+import * as Rooms from '../repositories/rooms';
 
 export const handleChat = {
     chat: (socket, io) => async (roomId, message, user) => {
