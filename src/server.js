@@ -28,13 +28,9 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
     .catch(err => console.log(err))
 
   io.on('connection', (socket) => {
-    console.log('Novo usuário conectado:', socket.id);
-
     socket.on('createRoom', async ({roomName, password, owner}) => {
-      console.log(roomName, password, owner)
       if (roomName && roomName.length > 0) {
         const roomId = nanoid(8);
-        const link = `http://localhost:3000/room/${roomId}`;
 
         await Room.find({ roomName }).exec()
           .then((room) => {
@@ -43,7 +39,6 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
                 roomId,
                 roomName,
                 password,
-                link,
                 isFull: false,
                 hasPassword: !!(password && password.length > 0),
                 currentTurn: 0,
@@ -55,6 +50,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
                 .then((createdRoom) => {
                   const state = {
                     socketId: socket.id,
+                    userIP: socket.handshake.address,
                     userName: owner
                   }
                   updateOwner(createdRoom.roomId, state);
@@ -86,7 +82,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
                 }
   
                 socket.join(roomId);
-                room.users.push({ userEmail, socketId: socket.id, position: 0, money: 12980000, cards: [] });
+                room.users.push({ userEmail, socketId: socket.id, userIP: socket.handshake.address, position: 0, money: 12980000, cards: [] });
                 if (room.users.length === 4) room.isFull = true;
                 room.save();
                 getAllRooms()
@@ -98,7 +94,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
                 }
   
                 socket.join(roomId);
-                room.users.push({ userEmail, socketId: socket.id, position: 0, money: 12980000, cards: [] });
+                room.users.push({ userEmail, socketId: socket.id, userIP: socket.handshake.address, position: 0, money: 12980000, cards: [] });
                 if (room.users.length === 4) room.isFull = true;
                 room.save();
                 socket.emit('joined', true);
@@ -152,12 +148,13 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
             let resp = rollDices()
             order.push({
               socketId: room?.users[i].socketId,
+              userIP: room?.users[i].userIP,
               orderInTurn: resp
             })
           }
           order.sort((a,b) => b.orderInTurn - a.orderInTurn)
           for(let i = 0; i < numberOfPLayers; i++){
-            await room.diceWinners.push(order[i].socketId)
+            await room.diceWinners.push(order[i].userIP)
           }
           await room.save()
 
@@ -205,17 +202,11 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
         .catch((err) => console.log(err))
     
     })
-    
-
-    socket.on('leaveRoom', ({ roomId, userEmail }) => {
-      socket.leave(roomId);
-      removeUserFromRoom(socket.id);
-    });
 
     socket.on('sendMessage', async (roomId, message, user) => {
       await Room.findOne({ roomId }).exec()
         .then((room) => {
-          if (room && room.users.find((u) => u.userEmail === user && u.socketId === socket.id)) {
+          if (room && room.users.find((u) => u.userEmail === user && u.userIP === socket.handshake.address)) {
             io.to(roomId).emit('receiveMessage', message, user);
           }
         });
@@ -233,23 +224,28 @@ mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true }).
       getAllRooms()
     });
 
-    socket.on('disconnect', () => {
-      removeUserFromRoom(socket.id);
-    });
+    socket.on('removePlayer', () => {
+      removeUserFromRoom(socket.id, socket.handshake.address);
+    })
 
-    async function removeUserFromRoom(socketId) {
-      await Room.findOne({ 'users.socketId': socketId }).exec()
-        .then((room) => {
-          if (room) {
-            const index = room.users.findIndex((user) => user.socketId === socketId);
-            if (index !== -1) {
-              const user = room.users[index];
-              room.users.splice(index, 1);
-              room.save();
-            }
+    async function removeUserFromRoom(socketId, userIP) {
+      try {
+        const room = await Room.findOne({ 'users.socketId': socketId, 'users.userIP': userIP });
+    
+        if (room) {
+          const index = room.users.findIndex((user) => user.socketId == socketId);
+          if (index !== -1) {
+            room.users.splice(index, 1);
+            await room.save();
           }
-        });
+        }
+        return true;
+      } catch (error) {
+        console.error(error);
+        return false; 
+      }
     }
+    
     async function getAllRooms() {
       await Room.find({}).exec()
         .then((rooms) => {

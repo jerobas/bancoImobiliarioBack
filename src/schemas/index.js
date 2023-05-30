@@ -4,9 +4,9 @@ export const roomSchema = new mongoose.Schema({
   roomId: String,
   roomName: String,
   password: String,
-  link: String,
   owner: {
     socketId: String,
+    userIP: String,
     userName: String,
   },
   users: [],
@@ -15,7 +15,7 @@ export const roomSchema = new mongoose.Schema({
   hasPassword: Boolean,
   diceWinners: [],
   state: {
-    type: String, // turn || wait || winner || rollingDices
+    type: String,
     duration: String
   },
 }, {
