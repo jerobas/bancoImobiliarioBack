@@ -1,151 +1,151 @@
 /* eslint-disable linebreak-style */
+/* eslint-disable import/no-cycle */
 /* eslint-disable indent */
-import { createRoom } from '../repositories/rooms';
+import * as Rooms from '../repositories/rooms.js';
 
-async function removeUserFromRoom(socketId) {
-    await Room.findOne({ 'users.socketId': socketId }).exec()
-        .then((room) => {
-            if (room) {
-                const index = room.users.findIndex((user) => user.socketId === socketId);
-                if (index !== -1) {
-                    const user = room.users[index];
-                    room.users.splice(index, 1);
-                    room.save();
-                }
-            }
-        });
+async function removeUserFromRoom(roomId, socketId) {
+    Rooms.removeUser(roomId, socketId);
 }
 
-async function getAllRooms() {
-    await Room.find({}).exec()
-        .then((rooms) => {
-            if (rooms.length > 0) {
-                io.emit('updateRooms', {
-                    numberOfRooms: rooms.length,
-                    rooms: rooms.map((room) => [room.roomName, room.roomId, room.hasPassword, room.isFull, room.users.length]),
-                });
-            } else {
-                io.emit('updateRooms', {
-                    numberOfRooms: 0,
-                    rooms: null,
-                });
-            }
+async function getAllRooms(socket) {
+    const rooms = await Rooms.getAll();
+    if (rooms.length > 0) {
+        console.log(rooms);
+        socket.emit('updateRooms', {
+            numberOfRooms: rooms.length,
+            rooms: rooms.map((room) => [
+                room.roomName,
+                room.roomId,
+                room.hasPassword,
+                room.isFull,
+                room.users.length,
+            ]),
         });
+    } else {
+        socket.emit('updateRooms', {
+            numberOfRooms: 0,
+            rooms: null,
+        });
+    }
 }
 
-const updateOwner = async (roomId, owner) => {
-    try {
-        const oldRoom = await Room.findOneAndUpdate({ roomId }, { owner });
-        if (!oldRoom) {
-            console.log('Sala não encontrada');
-            throw new Error('Sala não encontrada');
-        }
-    } catch (error) {
-        console.log(error);
-    }
-};
+// const updateOwner = async (roomId, owner) => {
+//     try {
+//         const oldRoom = await Room.findOneAndUpdate({ roomId }, { owner });
+//         if (!oldRoom) {
+//             console.log('Sala não encontrada');
+//             throw new Error('Sala não encontrada');
+//         }
+//     } catch (error) {
+//         console.log(error);
+//     }
+// };
 
-const updateRoomState = async (roomId, state) => {
-    try {
-        const oldRoom = await Room.findOneAndUpdate({ roomId }, { state });
-        if (!oldRoom) {
-            console.log('Sala não encontrada');
-            throw new Error('Sala não encontrada');
-        }
+// const updateRoomState = async (roomId, state) => {
+//     try {
+//         const oldRoom = await Room.findOneAndUpdate({ roomId }, { state });
+//         if (!oldRoom) {
+//             console.log('Sala não encontrada');
+//             throw new Error('Sala não encontrada');
+//         }
 
-        systemMessage(roomId, state.type);
-        io.to(roomId).emit('gameStateUpdated', state);
-    } catch (error) {
-        console.log(error);
-    }
-};
+//         systemMessage(roomId, state.type);
+//         io.to(roomId).emit('gameStateUpdated', state);
+//     } catch (error) {
+//         console.log(error);
+//     }
+// };
 
-export const roomHandlers = (socket) => {
-    socket.on('createRoom', async ({ roomName, password }) => {
+export const roomHandlers = {
+    create: socket => async ({ roomName, password }) => {
         try {
-            const createdRoom = await createRoom({ roomName, password, owner: socket.id });
+            const createdRoom = await Rooms.create({ roomName, password, owner: socket.id });
             socket.emit('roomId', createdRoom.roomId);
-            getAllRooms();
-        } catch (error) { socket.emit('roomCreated', error); }
-    });
+            console.log('======CREATE======');
+            getAllRooms(socket);
+        } catch (error) {
+            console.error(error);
+            socket.emit('roomCreated', error);
+        }
+    },
 
-    socket.on('joinRoom', async ({ roomId, password, userEmail }) => {
+    join: socket => async ({ roomId, password, userEmail }) => {
         try {
-            const room = await Room.findOne({ roomId }).exec();
-            if (!room) return socket.emit('joined', false);
+            const room = await Rooms.find(roomId);
 
             if (room.state.type !== 'idle') return socket.emit('joined', false);
             if (room.isFull) return socket.emit('joined', false);
             if (room.password.length > 0 && room.password !== password) return socket.emit('joined', false);
             if (room.users.find((user) => user.userEmail === userEmail)) return socket.emit('joined', false);
 
+            Rooms.addUser(roomId, userEmail, socket.id);
             socket.join(roomId);
-            room.users.push({
-                userEmail, socketId: socket.id, position: 0, money: 12980000, cards: [],
-            });
-            room.save();
 
             socket.emit('joined', true);
-            getAllRooms();
-        } catch (error) { console.log('Erro ao buscar sala:', error); }
-    });
+            console.log('======JOIN======');
+            return getAllRooms(socket);
+        } catch (error) { return console.log('Erro ao buscar sala:', error); }
+    },
 
-    socket.on('getRooms', getAllRooms);
+    getAll: socket => () => getAllRooms(socket),
 
-    socket.on('getPlayers', async (roomId) => {
-        await Room.findOne({ roomId }).exec()
-            .then((room) => {
-                io.to(roomId).emit('returnPlayer', room?.users);
-            });
-    });
+    getUsers: socket => async (roomId) => {
+        const room = await Rooms.find(roomId);
+        socket.to(roomId).emit('returnPlayer', room?.users);
+    },
 
-    socket.on('getOwner', async (roomId) => {
-        await Room.findOne({ roomId }).exec()
-            .then((room) => {
-                io.to(roomId).emit('returnOwner', room?.owner);
-            });
-    });
+    getOwner: socket => async (roomId) => {
+        const room = await Rooms.find(roomId);
+        socket.to(roomId).emit('returnOwner', room?.owner);
+    },
 
-    socket.on('leaveRoom', ({ roomId }) => {
+    leave: socket => ({ roomId }) => {
         socket.leave(roomId);
-        removeUserFromRoom(socket.id);
-    });
+        removeUserFromRoom(roomId, socket.id);
+    },
 
-    socket.on('rollDices', async ({
+    rollDices: socket => async ({
         roomId, value, userEmail, numberOfCells,
     }) => {
-        await Room.findOne({ roomId }).exec()
-            .then(async (room) => {
-                for (let i = 0; i < room.users.length; i++) {
-                    if (room.users[i].userEmail === userEmail) {
-                        if ((value + room.users[i].position) >= numberOfCells) {
-                            room.users[i] = {
-                                ...room.users[i],
-                                position: (value + room.users[i].position) % numberOfCells,
-                                money: Number(Number(room.users[i].money) + 200),
-                            };
-                        } else {
-                            room.users[i] = {
-                                ...room.users[i],
-                                position: (value + room.users[i].position) % numberOfCells,
-                            };
-                        }
-                        break;
+        try {
+            const room = await Rooms.find(roomId);
+            for (let i = 0; i < room.users.length; i += 1) {
+                if (room.users[i].userEmail === userEmail) {
+                    if ((value + room.users[i].position) >= numberOfCells) {
+                        room.users[i] = {
+                            ...room.users[i],
+                            position: (value + room.users[i].position) % numberOfCells,
+                            money: Number(Number(room.users[i].money) + 200),
+                        };
+                    } else {
+                        room.users[i] = {
+                            ...room.users[i],
+                            position: (value + room.users[i].position) % numberOfCells,
+                        };
                     }
+                    break;
                 }
-                if (room.currentTurn === room.users.length - 1) { // numero iguais joga dnv
-                    room.currentTurn = 0;
-                } else room.currentTurn += 1;
-                room.save();
-                io.to(roomId).emit('playersStates', {
-                    users: room?.users,
-                    currentTurn: room.currentTurn,
-                });
-            })
-            .catch((err) => console.log(err));
+            }
+            if (room.currentTurn === room.users.length - 1) { // numero iguais joga dnv
+                room.currentTurn = 0;
+            } else room.currentTurn += 1;
+            room.save();
+            return socket.to(roomId).emit('playersStates', {
+                users: room?.users,
+                currentTurn: room.currentTurn,
+            });
+        } catch (err) {
+            return console.log(err);
+        }
+    },
+};
+
+export const startRoomHandlers = (socket) => {
+    Object.keys(roomHandlers).forEach((key) => {
+        socket.on(`rooms:${key}`, roomHandlers[key](socket));
     });
 };
 
-export const roomWhenDisconnect = (socket) => {
-    removeUserFromRoom(socket.id);
+export const roomWhenDisconnect = (roomId) => {
+    //removeUserFromRoom(roomId, socket.id);
 };

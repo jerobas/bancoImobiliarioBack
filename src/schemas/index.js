@@ -1,12 +1,16 @@
+/* eslint-disable linebreak-style */
+/* eslint-disable indent */
+
 import mongoose from 'mongoose';
 
 export const userSchema = new mongoose.Schema({
   socketId: String,
   userName: String,
+  currentRoom: { type: mongoose.Schema.Types.String, ref: 'Rooms' },
   joinedAt: {
     type: Date,
     default: Date.now,
-    immutable: true
+    immutable: true,
   },
 
   // game-related
@@ -22,9 +26,9 @@ export const roomSchema = new mongoose.Schema({
   link: String,
 
   // user-related
-  owner: userSchema.socketId,
-  users: [userSchema],
-  diceWinners: [userSchema],
+  owner: String,
+  users: [{ $type: mongoose.Schema.Types.String, ref: 'Users' }],
+  diceWinners: [Number],
   maxUsers: {
     $type: Number,
     default: 4,
@@ -34,20 +38,20 @@ export const roomSchema = new mongoose.Schema({
   currentTurn: Number,
   state: {
     type: String, // turn || wait || winner || rollingDices
-    duration: String
+    duration: String,
   },
 }, {
   virtuals: {
     isFull: {
       get() {
-        return this.users.length === this.maxUsers
-      }
+        return this.users.length === this.maxUsers;
+      },
     },
     hasPassword: {
       get() {
-        return this.password.length > 0
-      }
-    }
+        return this.password.length > 0;
+      },
+    },
   },
-  typeKey: '$type'
+  typeKey: '$type',
 });

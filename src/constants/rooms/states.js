@@ -1,6 +1,6 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable indent */
-const types = [];
+const types = ['idle', 'action', 'system'];
 
 class States {
     type;
@@ -26,10 +26,10 @@ class States {
     // }
 
     constructor(type, duration) {
-        if (this.checkType(type) === false) {
+        if (this.constructor.checkType(type) === false) {
             throw new Error('Invalid type');
         }
-        if (checkDuration(duration) === false) {
+        if (this.constructor.checkDuration(duration) === false) {
             throw new Error('Invalid duration');
         }
         this.type = type;
@@ -37,10 +37,11 @@ class States {
     }
 
     static idle(duration) {
-        return new States('idle', duration, null);
+        return new States('idle', duration);
     }
 
-    static action(duration, type, target) {
+    // static action(duration, type, target) {
+    static action(duration) {
         return new States('action', duration);
     }
 
@@ -48,3 +49,5 @@ class States {
         return new States('system', duration);
     }
 }
+
+export default States;

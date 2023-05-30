@@ -1,74 +1,83 @@
 /* eslint-disable linebreak-style */
+/* eslint-disable import/no-cycle */
 /* eslint-disable indent */
 
 import { mongoose } from 'mongoose';
+import { nanoid } from 'nanoid';
 
-import { roomSchema } from '../schemas';
-import { isValidRoomName } from '../utils/rooms';
+import States from '../constants/rooms/states.js';
+import { roomSchema } from '../schemas/index.js';
+import { isValidRoomName } from '../utils/rooms.js';
+import * as Users from './users.js';
 
-const Room = mongoose.model('Room', roomSchema);
+const Rooms = mongoose.model('Rooms', roomSchema);
 
-const findRoom = async (roomId) => {
-    const room = await findRoomIfExist(roomId);
+const getAll = async () => Rooms.find({}).exec();
+
+const findIfExists = async (roomId) => {
+    const room = await Rooms.findOne({ roomId }).exec();
+    return room;
+};
+
+const find = async (roomId) => {
+    const room = await findIfExists(roomId);
     if (!room) {
         throw new Error('Room not found');
     }
     return room;
 };
 
-const findRoomIfExist = async (roomId) => {
-    const room = await Room.findOne({ roomId }).exec();
-    return room;
-};
-
-const deleteRoom = async (roomId) => {
-    const room = await findRoom(roomId);
+const remove = async (roomId) => {
+    const room = await find(roomId);
     await room.remove();
 };
 
-const deleteAllRooms = async () => Room.deleteMany({});
+const removeAll = async () => Rooms.deleteMany({});
 
-const createRoom = async ({ roomName, password, owner }) => {
+const create = async ({ roomName, password, owner }) => {
+    console.log('room being recreated???');
     if (!isValidRoomName(roomName)) throw new Error('Você precisa dar um nome para a sala!');
-    if (findRoomIfExist(roomName)) throw new Error(`A sala: ${roomName} já existe`);
+    if (await findIfExists(roomName)) throw new Error(`A sala: ${roomName} já existe`);
 
     const roomId = nanoid(8);
 
-    return await new Room({
+    return new Rooms({
         roomId,
         roomName,
         password,
         currentTurn: 0,
         owner,
-        state: States.idle(),
+        state: States.idle('indeterminate'),
+        // users: [],
     }).save();
 };
 
-const removePlayer = async (roomId, socketId) => {
-    const room = await findRoom(roomId);
-    const user = await room.users.find((user) => user.socketId === socketId);
+const removeUser = async (roomId, socketId) => {
+    const room = await find(roomId);
+    const user = await room.users.find((u) => u.socketId === socketId);
     if (!user) {
         throw new Error('User not in room');
     }
     await user.remove();
 };
 
-const addPlayer = async (roomId, socketId, username) => {
-    const room = await findRoom(roomId);
-    const user = await room.users.find((user) => user.socketId === socketId);
-    if (user) {
-        throw new Error('User already in room');
-    }
-    await room.users.push({ socketId, username });
+const addUser = async (roomId, socketId, username) => {
+    const room = await find(roomId);
+    let user = await room.users.find((u) => u.socketId === socketId);
+    if (user) throw new Error('User already in room');
+    user = await Users.create({ socketId, roomId, username });
+    room.users.push(user);
     await room.save();
 };
 
 export {
-    Room,
-    findRoomIfExist,
-    deleteRoom,
-    deleteAllRooms,
-    createRoom,
-    removePlayer,
-    addPlayer,
+    getAll,
+    Rooms as mongooseModel,
+    find,
+    findIfExists,
+    remove,
+    removeAll,
+    create,
+    removeUser,
+    addUser,
 };
