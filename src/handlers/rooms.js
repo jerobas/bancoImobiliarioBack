@@ -141,8 +141,10 @@ export const roomHandlers = {
             if (room.currentTurn === room.users.length - 1) {
                 room.currentTurn = 0;
             } else room.currentTurn = nextTurn;
+            console.log("nextTurn: " +nextTurn)
             room.save();
             const newRoom = await Rooms.find(roomId);
+            console.log("newRoom.currentTurn:" + newRoom.currentTurn)
             return io.to(roomId).emit('playersStates', {
                 users: newRoom?.users,
                 currentTurn: newRoom.currentTurn,
