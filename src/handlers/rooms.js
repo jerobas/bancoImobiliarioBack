@@ -8,7 +8,7 @@ async function removeUserFromRoom(roomId, socketId) {
 }
 
 async function getAllRooms(socket) {
-    const rooms = await Rooms.getAll();
+    const rooms = await Rooms.getAll().populate('users');
     if (rooms && rooms.length > 0) {
         socket.emit('updateRooms', {
             numberOfRooms: rooms.length,
@@ -70,7 +70,7 @@ export const roomHandlers = {
 
     join: socket => async ({ roomId, password, userEmail }) => {
         try {
-            const room = await Rooms.find(roomId);
+            const room = await Rooms.find(roomId).populate('users');
 
             if (room.state.type !== 'idle') return socket.emit('joined', false);
             if (room.isFull) return socket.emit('joined', false);
@@ -90,12 +90,12 @@ export const roomHandlers = {
     getAll: socket => () => getAllRooms(socket),
 
     getUsers: socket => async (roomId) => {
-        const room = await Rooms.find(roomId);
+        const room = await Rooms.find(roomId).populate('users');
         socket.to(roomId).emit('returnPlayer', room?.users);
     },
 
     getOwner: socket => async (roomId) => {
-        const room = await Rooms.find(roomId);
+        const room = await Rooms.find(roomId).populate('users');
         socket.to(roomId).emit('returnOwner', room?.owner);
     },
 
@@ -108,7 +108,7 @@ export const roomHandlers = {
         roomId, value, userEmail, numberOfCells,
     }) => {
         try {
-            const room = await Rooms.find(roomId);
+            const room = await Rooms.find(roomId).populate('users');
             for (let i = 0; i < room.users.length; i += 1) {
                 if (room.users[i].userEmail === userEmail) {
                     if ((value + room.users[i].position) >= numberOfCells) {
