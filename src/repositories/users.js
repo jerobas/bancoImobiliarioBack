@@ -2,10 +2,10 @@
 /* eslint-disable indent */
 /* eslint-disable import/no-cycle */
 import * as Rooms from './rooms.js';
-import {Users} from '../models/index.js'
+import {Users, Rooms as Room} from '../models/index.js'
 
 const findIfExists = async (socketId) => {
-    const user = await Users.findOne({ socketId }).exec();
+    const user = await Users.findOne({_id: socketId }).exec();
     return user;
 };
 
@@ -19,31 +19,39 @@ const find = async (socketId) => {
 
 const remove = async (socketId) => {
     const user = await find(socketId);
-    const currentRoom = await Rooms.findIfExists({ roomId: user.currentRoom }).exec();
+    // const currentRoom = await Rooms.findIfExists({ roomId: user.currentRoom }).exec();
+    const currentRoom = await Room.findOne({_id: user.currentRoom}).exec();
     if (currentRoom) {
         await Rooms.removeUser(currentRoom.roomId, socketId);
     }
     await user.remove();
 };
 
+const update = async (_id, newState) => {
+    return await Users.findOneAndUpdate({ _id }, { ...newState });
+} 
+
 const removeAll = async () => Users.deleteMany({});
 
-const createIfDontExist = async ({ socketId, roomId, username, userIP }) => new Users({
+const createIfDontExist = async ({ socketId, roomId, username, userIP, objectId }) => new Users({
     socketId: username,
-    currentRoom: roomId,
+    currentRoom: objectId,
     userName: socketId,
-    userIP: userIP
+    userIP: userIP,
+    position: 0,
+    money: 0,
+    cards: []
 }).save();
     
     
 
-const create = async ({ socketId, roomId, username, userIP }) => {
-    const user = await findIfExists(socketId);
+const create = async ({ socketId, roomId, username, userIP, objectId }) => {
+    const user = await findIfExists(objectId);
     if (user) {
         Rooms.removeUser(user.currentRoom, socketId);
         return user;
     }
-    return createIfDontExist({ username, roomId, socketId, userIP });
+    return createIfDontExist({ username, roomId, socketId, userIP, objectId });
 };
 
 export {
@@ -54,4 +62,5 @@ export {
     removeAll,
     create,
     createIfDontExist,
+    update
 };

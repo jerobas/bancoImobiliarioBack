@@ -10,7 +10,7 @@ import { Server } from 'socket.io';
 
 import { startRoomHandlers, roomWhenDisconnect } from './handlers/rooms.js';
 import {chatService} from './handlers/chat.js'
-
+import {gameService} from './handlers/game.js';
 import {Rooms , Users} from './models/index.js'
 
 dotenv.config();
@@ -25,11 +25,11 @@ const io = new Server(httpServer, {
 });
 
 const main = (socket) => {
-  console.log('Novo usuário conectado:', socket.id, socket.handshake.address);
 
-  startRoomHandlers(socket);
+  startRoomHandlers(socket, io);
   chatService(socket, io)
-
+  gameService(socket, io)
+  
   socket.on('disconnect', () => {
     roomWhenDisconnect(0, socket);
   });

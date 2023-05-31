@@ -1,22 +1,20 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable indent */
 import * as Rooms from '../repositories/rooms.js';
+import {formatUserIp} from '../utils/users.js'
 
 export const handleChat = {
     chat: (socket, io) => async (roomId, message, user) => {
         try {
             const room = await Rooms.find(roomId)
-            console.log(socket.handshake.address)
-            if(room)
+            if (room && room.users.find((u) => u.userEmail === user || u.userIP === formatUserIp(socket.handshake.address))) {
                 io.to(roomId).emit('receiveMessage', message, user);
-            // if (room && room.users.find((u) => u.userEmail === user && u.socketId === socket.id)) {
-            //     
-            // }
+            }
         } catch (error) {
             console.error(error);
         }
     },
-    systemMessage: (socket, io) => async (roomId, message) => {
+    systemMessage: (io) => async (roomId, message) => {
         io.to(roomId).emit('receiveMessage', message, 'Sistema');
     }
 }

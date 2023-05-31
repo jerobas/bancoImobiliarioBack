@@ -8,17 +8,18 @@ import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
 import {Rooms } from '../models/index.js'
 
-const getAll = async () => Rooms.find({}).exec();
+const getAll = async () => await Rooms.find().populate('users').exec()
 
 const findIfExists = async (roomId) => {
-    const room = await Rooms.findOne({ roomId }).exec();
+    const room = await Rooms.findOne({ roomId }).populate('users').exec();
     return room;
 };
 
 const find = async (roomId) => {
     const room = await findIfExists(roomId);
     if (!room) {
-        throw new Error('Room not found');
+        console.log('erro: sala n encontrada')
+        // throw new Error('Room not found');
     }
     return room;
 };
@@ -31,7 +32,6 @@ const remove = async (roomId) => {
 const removeAll = async () => Rooms.deleteMany({});
 
 const create = async ({ roomName, password, owner }) => {
-    console.log('room being recreated???');
     if (!isValidRoomName(roomName)) throw new Error('Você precisa dar um nome para a sala!');
     if (await findIfExists(roomName)) throw new Error(`A sala: ${roomName} já existe`);
 
@@ -44,7 +44,6 @@ const create = async ({ roomName, password, owner }) => {
         currentTurn: 0,
         owner,
         state: States.idle('indeterminate'),
-        // users: [],
     }).save();
 };
 
@@ -57,16 +56,19 @@ const removeUser = async (roomId, socketId) => {
     await user.remove();
 };
 
-const addUser = async (roomId, socketId, username, userIP) => {
+const addUser = async (roomId, socketId, username, userIP, objectId) => {
     const room = await find(roomId);
-    console.log(room)
     // let user = await room.users.find((u) => u.socketId === socketId);
     // console.log(user)
     // if (user) throw new Error('User already in room');
-    await Users.create({ socketId, roomId, username, userIP});
-    // room.users.push(user);
+    const user = await Users.create({ socketId, roomId, username, userIP, objectId});
+    await room.users.push(user);
     await room.save();
 };
+
+const update = async (roomId, newState) => {
+    return await Rooms.findOneAndUpdate({ roomId }, { ...newState });
+} 
 
 export {
     getAll,
@@ -78,4 +80,5 @@ export {
     create,
     removeUser,
     addUser,
+    update
 };
