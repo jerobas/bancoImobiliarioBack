@@ -43,9 +43,12 @@ export const handleGame = {
         }
         order.map((data) => console.log(data))
         order.sort((a, b) => b.orderInTurn - a.orderInTurn);
-        for (let i = 0; i < numberOfPLayers; i++) {
-            await room.diceWinners.push(order[i].objectId);
-        }
+        await Promise.all(numberOfPLayers.map(async (number) => {
+            await room.diceWinners.push(number.objectId)
+        }))
+        // for (let i = 0; i < numberOfPLayers; i++) {
+        //     await room.diceWinners.push(order[i].objectId);
+        // }
         await room.save();
         let newRoom = await Rooms.findIfExists(roomId); 
         state = {
@@ -54,11 +57,16 @@ export const handleGame = {
         };
         updateRoomState(roomId, state);
         const usersIPS = []
-        for (let i = 0; i < newRoom.diceWinners.length; i++) {
-            let user = await Users.findOne({ _id: newRoom.diceWinners[i]})
+        await Promise.all(newRoom.diceWinners.map(async (winner) => {
+            const user = await Users.findOne({ _id: winner})
             if(user)
                 usersIPS.push(user.userIP)
-        }
+        }))
+        // for (let i = 0; i < newRoom.diceWinners.length; i++) {
+        //     let user = await Users.findOne({ _id: newRoom.diceWinners[i]})
+        //     if(user)
+        //         usersIPS.push(user.userIP)
+        // }
         state = {
             ...state,
             diceWinners: usersIPS,
