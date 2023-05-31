@@ -96,62 +96,6 @@ export const roomHandlers = {
     rollDices: (socket, io) => async ({
         roomId, value, userEmail, numberOfCells,
     }) => {
-        // try {
-        //     const room = await Rooms.find(roomId);
-        //     let sumOfDices = Number(value.d1) + Number(value.d2);
-        //     let nextTurn = room.currentTurn + 1;
-
-        //     for (let i = 0; i < room.users.length; i += 1) {
-        //         if (room.users[i].userName === userEmail) {
-        //             let currentUser = await User.find(room.users[i]._id)
-
-
-
-        //             if(value.d1 === value.d2 && currentUser.numberOfEqualDices == 2){
-        //                 await User.update(room.users[i]._id, {numberOfEqualDices: 0, position: 30})
-        //                 break;
-        //             }
-        //             if(value.d1 === value.d2) {
-        //                 await User.update(room.users[i]._id, {$inc : {numberOfEqualDices : 1}})
-        //                 nextTurn = room.currentTurn;
-        //             }
-        //             if ((sumOfDices + room.users[i].position) >= numberOfCells) {
-        //                 await User.update(
-        //                 room.users[i]._id, 
-        //                     {
-        //                         position: (sumOfDices + room.users[i].position) % numberOfCells,
-        //                         money: Number(room.users[i].money) + 200
-        //                     }
-        //                 )
-                        
-        //             } else {
-        //                 await User.update(
-        //                     room.users[i]._id, 
-        //                         {
-        //                             position: (sumOfDices + room.users[i].position) % numberOfCells
-        //                         }
-        //                     )
-        //             }  
-        //             break;
-
-
-
-        //         }
-        //     }
-        //     if (room.currentTurn === room.users.length - 1) {
-        //         room.currentTurn = 0;
-        //     } else room.currentTurn = nextTurn;
-        //     console.log("nextTurn: " +nextTurn)
-        //     room.save();
-        //     const newRoom = await Rooms.find(roomId);
-        //     console.log("newRoom.currentTurn:" + newRoom.currentTurn)
-        //     return io.to(roomId).emit('playersStates', {
-        //         users: newRoom?.users,
-        //         currentTurn: newRoom.currentTurn,
-        //     });
-        // } catch (err) {
-        //     return console.log(err);
-        // }
         try {
             const room = await Rooms.find(roomId);
             const sumOfDices = Number(value.d1) + Number(value.d2);
@@ -165,7 +109,7 @@ export const roomHandlers = {
                 if (value.d1 === value.d2 && currentUser.numberOfEqualDices === 2) {
                   promises.push(User.update(user._id, { numberOfEqualDices: 0, position: 30 }));
                 }
-                if (value.d1 === value.d2) {
+                else if (value.d1 === value.d2) {
                   promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 } }));
                   nextTurn = room.currentTurn;
                 }
@@ -192,7 +136,7 @@ export const roomHandlers = {
             if (nextTurn === room.users.length) {
                 nextTurn = 0;
             } 
-            
+
             room.currentTurn = nextTurn;
             
             console.log("nextTurn: " + nextTurn);

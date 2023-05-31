@@ -59,11 +59,6 @@ export const handleGame = {
             if(user)
                 usersIPS.push(user.userIP)
         }))
-        // for (let i = 0; i < newRoom.diceWinners.length; i++) {
-        //     let user = await Users.findOne({ _id: newRoom.diceWinners[i]})
-        //     if(user)
-        //         usersIPS.push(user.userIP)
-        // }
         state = {
             ...state,
             diceWinners: usersIPS,
