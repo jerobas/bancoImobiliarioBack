@@ -24,6 +24,7 @@ const io = new Server(httpServer, {
 });
 
 const main = (socket) => {
+  console.log(socket.id)
   startRoomHandlers(socket, io);
   chatService(socket, io);
   gameService(socket, io);
