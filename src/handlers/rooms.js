@@ -110,11 +110,11 @@ export const roomHandlers = {
                   promises.push(User.update(user._id, { numberOfEqualDices: 0, position: 30 }));
                 }
                 else if (value.d1 === value.d2) {
-                  promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 } }));
+                  promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 }, position: (sumOfDices + user.position) % numberOfCells, }));
                   nextTurn = room.currentTurn;
                 }
 
-                if (sumOfDices + user.position >= numberOfCells) {
+                else if (sumOfDices + user.position >= numberOfCells) {
                   promises.push(
                     User.update(user._id, {
                       position: (sumOfDices + user.position) % numberOfCells,
