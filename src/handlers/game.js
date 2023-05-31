@@ -56,7 +56,7 @@ export const handleGame = {
         for (let i = 0; i < room.diceWinners.length; i++) {
             let user = await Users.findOne({ _id: room.diceWinners})
             if(user)
-                usersIPS.push(user.userIP.split(':').pop())
+                usersIPS.push(user.userIP)
         }
         state = {
             ...state,
