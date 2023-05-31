@@ -55,7 +55,7 @@ export const handleGame = {
         updateRoomState(roomId, state);
         const usersIPS = []
         for (let i = 0; i < newRoom.diceWinners.length; i++) {
-            let user = await Users.findOne({ _id: newRoom.diceWinners})
+            let user = await Users.findOne({ _id: newRoom.diceWinners[i]})
             if(user)
                 usersIPS.push(user.userIP)
         }
