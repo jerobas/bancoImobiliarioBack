@@ -66,7 +66,7 @@ export const roomHandlers = {
             if (room.password.length > 0 && room.password !== password) return socket.emit('joined', false);
             if (room.users.find((user) => user.userEmail === userEmail)) return socket.emit('joined', false);
 
-            Rooms.addUser(roomId, userEmail, socket.id, formatUserIp(socket.handshake.address), room._id);
+            await Rooms.addUser(roomId, userEmail, socket.id, formatUserIp(socket.handshake.address), room._id);
             socket.join(roomId);
 
             await room.save()
