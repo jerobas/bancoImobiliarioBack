@@ -32,7 +32,8 @@ const remove = async (roomId) => {
 const removeAll = async () => Rooms.deleteMany({});
 
 const create = async ({ roomName, password, owner }) => {
-    if (!isValidRoomName(roomName)) throw new Error('Você precisa dar um nome para a sala!');
+    try {
+        if (!isValidRoomName(roomName)) throw new Error('Você precisa dar um nome para a sala!');
     if (await findIfExists(roomName)) throw new Error(`A sala: ${roomName} já existe`);
 
     const roomId = nanoid(8);
@@ -45,6 +46,9 @@ const create = async ({ roomName, password, owner }) => {
         owner,
         state: States.idle('indeterminate'),
     }).save();
+    } catch (error) {
+        console.log(error)
+    }
 };
 
 const removeUser = async (roomId, userIP) => {

@@ -45,7 +45,9 @@ async function getAllRooms(socket) {
 export const roomHandlers = {
     create: (socket) => async ({ roomName, password }) => {
         try {
+            console.log('criando')
             const createdRoom = await Rooms.create({ roomName, password, owner: formatUserIp(socket.handshake.address) });
+            console.log('createdRoom')
             socket.emit('roomId', createdRoom.roomId);
             getAllRooms(socket);
         } catch (error) {
