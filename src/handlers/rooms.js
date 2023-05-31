@@ -190,10 +190,11 @@ export const roomHandlers = {
             await Promise.all(userPromises);
             
             if (nextTurn === room.users.length) {
-              room.currentTurn = 0;
-            } else {
-              room.currentTurn = nextTurn;
-            }
+                nextTurn = 0;
+            } 
+            
+            room.currentTurn = nextTurn;
+            
             console.log("nextTurn: " + nextTurn);
             await room.save();
           
