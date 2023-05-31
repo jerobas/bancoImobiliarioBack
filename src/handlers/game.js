@@ -43,12 +43,9 @@ export const handleGame = {
         }
         order.map((data) => console.log(data))
         order.sort((a, b) => b.orderInTurn - a.orderInTurn);
-        await Promise.all(numberOfPLayers.map(async (number) => {
-            await room.diceWinners.push(number.objectId)
-        }))
-        // for (let i = 0; i < numberOfPLayers; i++) {
-        //     await room.diceWinners.push(order[i].objectId);
-        // }
+        for (let i = 0; i < numberOfPLayers; i++) {
+            await room.diceWinners.push(order[i].objectId);
+        }
         await room.save();
         let newRoom = await Rooms.findIfExists(roomId); 
         state = {
