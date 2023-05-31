@@ -47,14 +47,15 @@ export const handleGame = {
             await room.diceWinners.push(order[i].objectId);
         }
         await room.save();
+        let newRoom = await Rooms.findIfExists(roomId); 
         state = {
             ...state,
-            currentTurn: room.currentTurn,
+            currentTurn: newRoom.currentTurn,
         };
         updateRoomState(roomId, state);
         const usersIPS = []
-        for (let i = 0; i < room.diceWinners.length; i++) {
-            let user = await Users.findOne({ _id: room.diceWinners})
+        for (let i = 0; i < newRoom.diceWinners.length; i++) {
+            let user = await Users.findOne({ _id: newRoom.diceWinners})
             if(user)
                 usersIPS.push(user.userIP)
         }
