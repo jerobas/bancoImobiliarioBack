@@ -17,14 +17,14 @@ const find = async (socketId) => {
     return user;
 };
 
-const remove = async (socketId) => {
-    const user = await find(socketId);
-    // const currentRoom = await Rooms.findIfExists({ roomId: user.currentRoom }).exec();
+const remove = async (ObjectId) => {
+    const user = await find(ObjectId);
     const currentRoom = await Room.findOne({ _id: user.currentRoom }).exec();
-    if (currentRoom) {
-        await Rooms.removeUser(currentRoom.roomId, socketId);
+    await Users.deleteOne({ _id: ObjectId });
+    if (currentRoom && currentRoom.users.includes(user)) {
+        console.log('ds');
+        await Rooms.removeUser(currentRoom.roomId, user.userIP);
     }
-    await user.remove();
 };
 
 const update = async (_id, newState) => await Users.findOneAndUpdate({ _id }, { ...newState });

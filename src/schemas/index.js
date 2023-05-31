@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+export const cellSchema = new mongoose.Schema({
+  owner: { type: mongoose.Schema.Types.ObjectId, name: 'User' },
+  buildLevel: {
+    type: Number,
+    default: 0,
+  },
+  hasEvent: {
+    type: Boolean,
+    default: false,
+    set: (value) => !(!this.canHaveEvent(value) || !value),
+  },
+  canHaveEvent: {
+    type: Boolean,
+  },
+});
+
 export const userSchema = new mongoose.Schema({
   socketId: String,
   userIP: String,

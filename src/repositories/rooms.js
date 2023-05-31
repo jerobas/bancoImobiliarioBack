@@ -47,13 +47,22 @@ const create = async ({ roomName, password, owner }) => {
     }).save();
 };
 
-const removeUser = async (roomId, socketId) => {
+const removeUser = async (roomId, userIP) => {
     const room = await find(roomId);
-    const user = await room.users.find((u) => u.socketId === socketId);
-    if (!user) {
-        throw new Error('User not in room');
+    let userIndex = 0;
+    if (room) {
+        const user = await room?.users.find((u, i) => {
+            if (u.userIP === userIP) {
+                userIndex = i;
+                return true;
+            }
+        });
+        room.users.splice(userIndex, 1);
+        await room.save();
+        if (user) {
+            await Users.remove(user._id);
+        }
     }
-    await user.remove();
 };
 
 const addUser = async (roomId, socketId, username, userIP, objectId) => {

@@ -5,8 +5,8 @@ import * as Rooms from '../repositories/rooms.js';
 import * as User from '../repositories/users.js';
 import { formatUserIp } from '../utils/users.js';
 
-async function removeUserFromRoom(roomId, socketId) {
-    Rooms.removeUser(roomId, socketId);
+async function removeUserFromRoom(roomId, userIP) {
+    await Rooms.removeUser(roomId, userIP);
 }
 
 async function getAllRooms(socket) {
@@ -86,9 +86,10 @@ export const roomHandlers = {
 }
     },
 
-    leave: (socket) => ({ roomId }) => {
+    leave: (socket) => async (roomId) => {
         socket.leave(roomId);
-        removeUserFromRoom(roomId, socket.id);
+        await removeUserFromRoom(roomId, formatUserIp(socket.handshake.address));
+        getAllRooms(socket);
     },
 
     rollDices: (socket, io) => async ({
