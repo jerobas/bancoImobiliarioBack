@@ -41,6 +41,7 @@ export const handleGame = {
                 orderInTurn: resp,
             });
         }
+        console.log('order:' +  order)
         order.sort((a, b) => b.orderInTurn - a.orderInTurn);
         for (let i = 0; i < numberOfPLayers; i++) {
             await room.diceWinners.push(order[i].objectId);
