@@ -4,11 +4,11 @@
 import { nanoid } from 'nanoid';
 
 import States from '../constants/rooms/states.js';
+import { Rooms } from '../models/index.js';
 import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
-import {Rooms } from '../models/index.js'
 
-const getAll = async () => await Rooms.find().populate('users').exec()
+const getAll = async () => await Rooms.find().populate('users').exec();
 
 const findIfExists = async (roomId) => {
     const room = await Rooms.findOne({ roomId }).populate('users').exec();
@@ -18,7 +18,7 @@ const findIfExists = async (roomId) => {
 const find = async (roomId) => {
     const room = await findIfExists(roomId);
     if (!room) {
-        console.log('erro: sala n encontrada')
+        console.log('erro: sala n encontrada');
         // throw new Error('Room not found');
     }
     return room;
@@ -61,14 +61,14 @@ const addUser = async (roomId, socketId, username, userIP, objectId) => {
     // let user = await room.users.find((u) => u.socketId === socketId);
     // console.log(user)
     // if (user) throw new Error('User already in room');
-    const user = await Users.create({ socketId, roomId, username, userIP, objectId});
+    const user = await Users.create({
+ socketId, roomId, username, userIP, objectId,
+});
     await room.users.push(user);
     await room.save();
 };
 
-const update = async (roomId, newState) => {
-    return await Rooms.findOneAndUpdate({ roomId }, { ...newState });
-} 
+const update = async (roomId, newState) => await Rooms.findOneAndUpdate({ roomId }, { ...newState });
 
 export {
     getAll,
@@ -80,5 +80,5 @@ export {
     create,
     removeUser,
     addUser,
-    update
+    update,
 };

@@ -1,10 +1,9 @@
 /* eslint-disable linebreak-style */
-/* eslint-disable import/no-cycle */
+
 /* eslint-disable indent */
 import * as Rooms from '../repositories/rooms.js';
 import * as User from '../repositories/users.js';
-import {formatUserIp} from '../utils/users.js'
-
+import { formatUserIp } from '../utils/users.js';
 
 async function removeUserFromRoom(roomId, socketId) {
     Rooms.removeUser(roomId, socketId);
@@ -43,10 +42,8 @@ async function getAllRooms(socket) {
 //     }
 // };
 
-
-
 export const roomHandlers = {
-    create: socket => async ({ roomName, password }) => {
+    create: (socket) => async ({ roomName, password }) => {
         try {
             const createdRoom = await Rooms.create({ roomName, password, owner: formatUserIp(socket.handshake.address) });
             socket.emit('roomId', createdRoom.roomId);
@@ -57,7 +54,7 @@ export const roomHandlers = {
         }
     },
 
-    join: socket => async ({ roomId, password, userEmail }) => {
+    join: (socket) => async ({ roomId, password, userEmail }) => {
         try {
             const room = await Rooms.find(roomId);
 
@@ -69,26 +66,27 @@ export const roomHandlers = {
             await Rooms.addUser(roomId, userEmail, socket.id, formatUserIp(socket.handshake.address), room._id);
             socket.join(roomId);
 
-            await room.save()
+            await room.save();
             socket.emit('joined', true);
             return getAllRooms(socket);
         } catch (error) { return console.log('Erro ao buscar sala:', error); }
     },
 
-    getAll: socket => () => getAllRooms(socket),
+    getAll: (socket) => () => getAllRooms(socket),
 
-    getUsers: (socket,  io) => async (roomId) => {
+    getUsers: (socket, io) => async (roomId) => {
         const room = await Rooms.find(roomId);
         io.to(roomId).emit('returnPlayer', room?.users);
     },
 
     getOwner: (socket, io) => async (roomId) => {
         const room = await Rooms.find(roomId);
-        if(room){
-            io.to(roomId).emit('returnOwner', room.owner);}
+        if (room) {
+            io.to(roomId).emit('returnOwner', room.owner);
+}
     },
 
-    leave: socket => ({ roomId }) => {
+    leave: (socket) => ({ roomId }) => {
         socket.leave(roomId);
         removeUserFromRoom(roomId, socket.id);
     },
@@ -101,50 +99,54 @@ export const roomHandlers = {
             const sumOfDices = Number(value.d1) + Number(value.d2);
             let nextTurn = room.currentTurn + 1;
             const promises = [];
-          
+
             const userPromises = room.users.map(async (user) => {
               if (user.userName === userEmail) {
                 const currentUser = await User.find(user._id);
-          
-                if (value.d1 === value.d2 && currentUser.numberOfEqualDices === 2) {
-                  promises.push(User.update(user._id, { numberOfEqualDices: 0, position: 30 }));
-                }
-                else if (value.d1 === value.d2) {
-                  promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 }, position: (sumOfDices + user.position) % numberOfCells, }));
-                  nextTurn = room.currentTurn;
-                }
 
-                else if (sumOfDices + user.position >= numberOfCells) {
+                if (currentUser.state != 0) {
+                    if (value.d1 === value.d2) {
+                      promises.push(User.update(user._id, { state: 0 }));
+                      nextTurn = room.currentTurn;
+                    } else {
+                      promises.push(User.update(user._id, { $inc: { state: -1 } }));
+                    }
+                } else if (value.d1 === value.d2 && currentUser.numberOfEqualDices === 2) {
+                  promises.push(User.update(user._id, { numberOfEqualDices: 0, position: 30, state: 3 }));
+                } else if (value.d1 === value.d2) {
+                  promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 }, position: (sumOfDices + user.position) % numberOfCells }));
+                  nextTurn = room.currentTurn;
+                } else if (sumOfDices + user.position >= numberOfCells) {
                   promises.push(
                     User.update(user._id, {
                       position: (sumOfDices + user.position) % numberOfCells,
                       money: Number(user.money) + 200,
-                    })
+                    }),
                   );
                 } else {
                   promises.push(
                     User.update(user._id, {
                       position: (sumOfDices + user.position) % numberOfCells,
-                    })
+                    }),
                   );
                 }
               }
             });
-          
+
             await Promise.all(userPromises);
-            
+
             if (nextTurn === room.users.length) {
                 nextTurn = 0;
-            } 
+            }
 
             room.currentTurn = nextTurn;
-            
-            console.log("nextTurn: " + nextTurn);
+
+            console.log(`nextTurn: ${nextTurn}`);
             await room.save();
-          
+
             const newRoom = await Rooms.find(roomId);
-            console.log("newRoom.currentTurn: " + newRoom.currentTurn);
-            await io.to(roomId).emit("playersStates", {
+            console.log(`newRoom.currentTurn: ${newRoom.currentTurn}`);
+            await io.to(roomId).emit('playersStates', {
               users: newRoom?.users,
               currentTurn: newRoom.currentTurn,
             });
@@ -161,5 +163,5 @@ export const startRoomHandlers = (socket, io) => {
 };
 
 export const roomWhenDisconnect = (roomId) => {
-    //removeUserFromRoom(roomId, socket.id);
+    // removeUserFromRoom(roomId, socket.id);
 };

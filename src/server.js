@@ -1,6 +1,5 @@
 /* eslint-disable linebreak-style */
-/* eslint-disable import/no-cycle */
-/* eslint-disable indent */
+
 /* eslint-disable no-console */
 
 import * as dotenv from 'dotenv';
@@ -8,10 +7,10 @@ import { createServer } from 'http';
 import { mongoose } from 'mongoose';
 import { Server } from 'socket.io';
 
+import { chatService } from './handlers/chat.js';
+import { gameService } from './handlers/game.js';
 import { startRoomHandlers, roomWhenDisconnect } from './handlers/rooms.js';
-import {chatService} from './handlers/chat.js'
-import {gameService} from './handlers/game.js';
-import {Rooms , Users} from './models/index.js'
+import { Rooms, Users } from './models/index.js';
 
 dotenv.config();
 const mongoURL = process.env.MONGOURL_ATLAS;
@@ -25,11 +24,10 @@ const io = new Server(httpServer, {
 });
 
 const main = (socket) => {
-
   startRoomHandlers(socket, io);
-  chatService(socket, io)
-  gameService(socket, io)
-  
+  chatService(socket, io);
+  gameService(socket, io);
+
   socket.on('disconnect', () => {
     roomWhenDisconnect(0, socket);
   });

@@ -1,3 +1,1 @@
-export const formatUserIp = (userIP) => {
-    return userIP.split(':').pop()
-} 
+export const formatUserIp = (userIP) => userIP.split(':').pop();

@@ -6,7 +6,7 @@ export const userSchema = new mongoose.Schema({
   userName: String,
   numberOfEqualDices: {
     type: Number,
-    default: 0
+    default: 0,
   },
   currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   joinedAt: {
@@ -15,7 +15,10 @@ export const userSchema = new mongoose.Schema({
     immutable: true,
   },
 
-  // game-related
+  state: {
+    type: Number,
+    default: 0,
+  },
   position: Number,
   money: Number,
   cards: [],
