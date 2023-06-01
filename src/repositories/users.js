@@ -12,7 +12,7 @@ const findIfExists = async (socketId) => {
 const find = async (socketId) => {
     const user = await findIfExists(socketId);
     if (!user) {
-        throw new Error('User not found');
+        // throw new Error('User not found');
     }
     return user;
 };
@@ -48,7 +48,7 @@ const create = async ({
 }) => {
     const user = await findIfExists(objectId);
     if (user) {
-        Rooms.removeUser(user.currentRoom, socketId);
+        await Rooms.removeUser(user.currentRoom, socketId);
         return user;
     }
     return createIfDontExist({

@@ -31,25 +31,15 @@ async function getAllRooms(socket) {
     }
 }
 
-// const updateOwner = async (roomId, owner) => {
-//     try {
-//         const oldRoom = await Room.findOneAndUpdate({ roomId }, { owner });
-//         if (!oldRoom) {
-//             console.log('Sala não encontrada');
-//             throw new Error('Sala não encontrada');
-//         }
-//     } catch (error) {
-//         console.log(error);
-//     }
-// };
-
 export const roomHandlers = {
-    create: (socket) => async ({ roomName, password }) => {
+    create: (socket, io, handleError) => async ({ roomName, password }) => {
         try {
             const createdRoom = await Rooms.create({ roomName, password, owner: formatUserIp(socket.handshake.address) });
             if(createdRoom){
-              socket.emit('roomId', createdRoom.roomId);
+              socket.emit('created', createdRoom);
               getAllRooms(socket);
+            }else{
+              handleError.sendGlobalError(`A sala ${roomName} já existe!`)
             }
         } catch (error) {
             console.error(error);
@@ -57,45 +47,59 @@ export const roomHandlers = {
         }
     },
 
-    join: (socket) => async ({ roomId, password, userEmail }) => {
+    join: (socket, io, handleError) => async ({ roomId, password, userEmail }) => {
         try {
             const room = await Rooms.find(roomId);
-
-            if (room.state.type !== 'idle') return socket.emit('joined', false);
-            if (room.isFull) return socket.emit('joined', false);
-            if (room.password.length > 0 && room.password !== password) return socket.emit('joined', false);
-            if (room.users.find((user) => user.userEmail === userEmail)) return socket.emit('joined', false);
-
-            await Rooms.addUser(roomId, userEmail, socket.id, formatUserIp(socket.handshake.address), room._id);
-            socket.join(roomId);
-
-            await room.save();
-            socket.emit('joined', true);
-            return getAllRooms(socket);
+            if(room){
+              if (room.state.type !== 'idle') {
+                handleError.sendGlobalError(`Esse jogo já começou!`)
+                return socket.emit('joined', false);
+              }
+              if (room.isFull) {
+                handleError.sendGlobalError(`Essa sala está cheia!`)
+                return socket.emit('joined', false);
+              }
+              if (room.password.length > 0 && room.password !== password){
+                handleError.sendGlobalError(`A senha esta incorreta!`)
+                return socket.emit('joined', false)
+                
+              }
+              if (room.users.find((user) => user.userName === userEmail)) {
+                handleError.sendGlobalError('Você ja está nessa sala!')
+                return socket.emit('joined', false)
+              }
+  
+              await Rooms.addUser(roomId, userEmail, socket.id, formatUserIp(socket.handshake.address), room._id);
+              socket.join(roomId);
+  
+              await room.save();
+              socket.emit('joined', roomId);
+              return getAllRooms(socket);
+            }           
         } catch (error) { return console.log('Erro ao buscar sala:', error); }
     },
 
-    getAll: (socket) => () => getAllRooms(socket),
+    getAll: (socket, io, handleError) => () => getAllRooms(socket),
 
-    getUsers: (socket, io) => async (roomId) => {
+    getUsers: (socket, io, handleError) => async (roomId) => {
         const room = await Rooms.find(roomId);
         io.to(roomId).emit('returnPlayer', room?.users);
     },
 
-    getOwner: (socket, io) => async (roomId) => {
+    getOwner: (socket, io, handleError) => async (roomId) => {
         const room = await Rooms.find(roomId);
         if (room) {
             io.to(roomId).emit('returnOwner', room.owner);
 }
     },
 
-    leave: (socket) => async (roomId) => {
+    leave: (socket, io, handleError) => async (roomId) => {
         socket.leave(roomId);
         await removeUserFromRoom(roomId, formatUserIp(socket.handshake.address));
         getAllRooms(socket);
     },
 
-    rollDices: (socket, io) => async ({
+    rollDices: (socket, io, handleError) => async ({
         roomId, value, userEmail, numberOfCells,
     }) => {
         try {
@@ -144,12 +148,9 @@ export const roomHandlers = {
             }
 
             room.currentTurn = nextTurn;
-
-            console.log(`nextTurn: ${nextTurn}`);
             await room.save();
 
             const newRoom = await Rooms.find(roomId);
-            console.log(`newRoom.currentTurn: ${newRoom.currentTurn}`);
             await io.to(roomId).emit('playersStates', {
               users: newRoom?.users,
               currentTurn: newRoom.currentTurn,
@@ -160,9 +161,9 @@ export const roomHandlers = {
     },
 };
 
-export const startRoomHandlers = (socket, io) => {
+export const startRoomHandlers = (socket, io, handleError) => {
     Object.keys(roomHandlers).forEach((key) => {
-        socket.on(`rooms:${key}`, roomHandlers[key](socket, io));
+        socket.on(`rooms:${key}`, roomHandlers[key](socket, io, handleError));
     });
 };
 

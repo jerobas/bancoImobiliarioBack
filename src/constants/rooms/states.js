@@ -27,10 +27,10 @@ class States {
 
     constructor(type, duration) {
         if (this.constructor.checkType(type) === false) {
-            throw new Error('Invalid type');
+            // throw new Error('Invalid type');
         }
         if (this.constructor.checkDuration(duration) === false) {
-            throw new Error('Invalid duration');
+            // throw new Error('Invalid duration');
         }
         this.type = type;
         this.duration = duration;

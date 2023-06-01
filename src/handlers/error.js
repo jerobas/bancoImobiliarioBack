@@ -1,11 +1,10 @@
-export const handleError = {
-    sendGlobalError: (socket, io) => async (message) => {
-        io.emit('errorMessage', message);
+export default class handlerError {
+    constructor(socket, io) {
+        this.socket = socket;
+        this.io = io
     }
-}
 
-export const errorService = (socket, io) => {
-    Object.keys(handleError).forEach((key) => {
-        handleError[key](socket,io);
-    });
+    async sendGlobalError(message) {
+        this.io.emit('errorMessage', message);
+    }
 }

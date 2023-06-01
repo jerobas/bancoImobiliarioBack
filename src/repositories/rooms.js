@@ -7,8 +7,6 @@ import States from '../constants/rooms/states.js';
 import { Rooms } from '../models/index.js';
 import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
-import {handleError} from '../handlers/error.js';
-
 const getAll = async () => await Rooms.find().populate('users').exec();
 
 const findIfExistsByName = async(roomName) => {
@@ -24,8 +22,7 @@ const findIfExists = async (roomId) => {
 const find = async (roomId) => {
     const room = await findIfExists(roomId);
     if (!room) {
-        console.log('erro: sala n encontrada');
-        // throw new Error('Room not found');
+        // throw new Error('Sala não encontrada')
     }
     return room;
 };
@@ -41,10 +38,7 @@ const create = async ({ roomName, password, owner }) => {
     try {
         const roomId = nanoid(8);
         if (!isValidRoomName(roomName)) return false
-        if (await findIfExistsByName(roomName)){
-            handleError.sendGlobalError(`Room ${roomName} already exists`)
-            return false
-        }
+        if (await findIfExistsByName(roomName)) return false
 
         return new Rooms({
             roomId,
@@ -79,9 +73,6 @@ const removeUser = async (roomId, userIP) => {
 
 const addUser = async (roomId, socketId, username, userIP, objectId) => {
     const room = await find(roomId);
-    // let user = await room.users.find((u) => u.socketId === socketId);
-    // console.log(user)
-    // if (user) throw new Error('User already in room');
     const user = await Users.create({
  socketId, roomId, username, userIP, objectId,
 });

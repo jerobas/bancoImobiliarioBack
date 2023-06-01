@@ -10,12 +10,11 @@ const rollDices = () => {
     return d1 + d2;
 };
 
-const updateRoomState = async (roomId, state) => {
+const updateRoomState = async (roomId, state, handleError) => {
     try {
         const oldRoom = await Rooms.update(roomId, { state });
         if (!oldRoom) {
-            console.log('Sala não encontrada');
-            throw new Error('Sala não encontrada');
+            handleError.sendGlobalError('Sala não encontrada!')
         }
 
         handleChat.systemMessage(roomId, state.type);
@@ -25,7 +24,7 @@ const updateRoomState = async (roomId, state) => {
 };
 
 export const handleGame = {
-    start: (io) => async (roomId) => {
+    start: (socket, io, handleError) => async (roomId) => {
     let state = {
         type: 'Game starting...',
         duration: 'indeterminate',
@@ -51,7 +50,7 @@ export const handleGame = {
             ...state,
             currentTurn: newRoom.currentTurn,
         };
-        updateRoomState(roomId, state);
+        updateRoomState(roomId, state, handleError);
         const usersIPS = [];
         await Promise.all(newRoom.diceWinners.map(async (winner) => {
             const user = await Users.findOne({ _id: winner });
@@ -66,8 +65,8 @@ export const handleGame = {
     },
 };
 
-export const gameService = (socket, io) => {
+export const gameService = (socket, io, handleError) => {
      Object.keys(handleGame).forEach((key) => {
-        socket.on(`rooms:${key}`, handleGame[key](io));
+        socket.on(`rooms:${key}`, handleGame[key](socket, io, handleError));
     });
 };
