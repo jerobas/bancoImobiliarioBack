@@ -7,8 +7,14 @@ import States from '../constants/rooms/states.js';
 import { Rooms } from '../models/index.js';
 import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
+import {handleError} from '../handlers/error.js';
 
 const getAll = async () => await Rooms.find().populate('users').exec();
+
+const findIfExistsByName = async(roomName) => {
+    const room = await Rooms.findOne({ roomName }).exec();
+    return room;
+}
 
 const findIfExists = async (roomId) => {
     const room = await Rooms.findOne({ roomId }).populate('users').exec();
@@ -33,19 +39,21 @@ const removeAll = async () => Rooms.deleteMany({});
 
 const create = async ({ roomName, password, owner }) => {
     try {
-        if (!isValidRoomName(roomName)) throw new Error('Você precisa dar um nome para a sala!');
-    if (await findIfExists(roomName)) throw new Error(`A sala: ${roomName} já existe`);
+        const roomId = nanoid(8);
+        if (!isValidRoomName(roomName)) return false
+        if (await findIfExistsByName(roomName)){
+            handleError.sendGlobalError(`Room ${roomName} already exists`)
+            return false
+        }
 
-    const roomId = nanoid(8);
-
-    return new Rooms({
-        roomId,
-        roomName,
-        password,
-        currentTurn: 0,
-        owner,
-        state: States.idle('indeterminate'),
-    }).save();
+        return new Rooms({
+            roomId,
+            roomName,
+            password,
+            currentTurn: 0,
+            owner,
+            state: States.idle('indeterminate'),
+        }).save();
     } catch (error) {
         console.log(error)
     }

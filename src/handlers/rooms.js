@@ -5,6 +5,7 @@ import * as Rooms from '../repositories/rooms.js';
 import * as User from '../repositories/users.js';
 import { formatUserIp } from '../utils/users.js';
 
+
 async function removeUserFromRoom(roomId, userIP) {
     await Rooms.removeUser(roomId, userIP);
 }
@@ -45,11 +46,11 @@ async function getAllRooms(socket) {
 export const roomHandlers = {
     create: (socket) => async ({ roomName, password }) => {
         try {
-            console.log('criando')
             const createdRoom = await Rooms.create({ roomName, password, owner: formatUserIp(socket.handshake.address) });
-            console.log('createdRoom')
-            socket.emit('roomId', createdRoom.roomId);
-            getAllRooms(socket);
+            if(createdRoom){
+              socket.emit('roomId', createdRoom.roomId);
+              getAllRooms(socket);
+            }
         } catch (error) {
             console.error(error);
             socket.emit('roomCreated', error);

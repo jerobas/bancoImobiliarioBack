@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { mongoose } from 'mongoose';
 import { Server } from 'socket.io';
 
+import {errorService} from './handlers/error.js';
 import { chatService } from './handlers/chat.js';
 import { gameService } from './handlers/game.js';
 import { startRoomHandlers, roomWhenDisconnect } from './handlers/rooms.js';
@@ -24,10 +25,10 @@ const io = new Server(httpServer, {
 });
 
 const main = (socket) => {
-  console.log(socket.id)
   startRoomHandlers(socket, io);
   chatService(socket, io);
   gameService(socket, io);
+  errorService(socket, io)
 
   socket.on('disconnect', () => {
     roomWhenDisconnect(0, socket);
