@@ -22,7 +22,6 @@ const remove = async (ObjectId) => {
     const currentRoom = await Room.findOne({ _id: user.currentRoom }).exec();
     await Users.deleteOne({ _id: ObjectId });
     if (currentRoom && currentRoom.users.includes(user)) {
-        console.log('ds');
         await Rooms.removeUser(currentRoom.roomId, user.userIP);
     }
 };

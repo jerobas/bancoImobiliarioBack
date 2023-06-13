@@ -7,6 +7,10 @@ import { formatUserIp } from '../utils/users.js';
 
 
 async function removeUserFromRoom(roomId, userIP) {
+    const currentRoom = await Rooms.find(roomId)
+    if(currentRoom.owner === userIP){
+      await Rooms.remove(roomId)
+    }
     await Rooms.removeUser(roomId, userIP);
 }
 
