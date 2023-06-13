@@ -29,7 +29,7 @@ const find = async (roomId) => {
 
 const remove = async (roomId) => {
     const room = await find(roomId);
-    await room.remove();
+    await Rooms.deleteOne({_id: room._id});
 };
 
 const removeAll = async () => Rooms.deleteMany({});

@@ -7,6 +7,10 @@ import { formatUserIp } from '../utils/users.js';
 
 
 async function removeUserFromRoom(roomId, userIP) {
+    const currentRoom = await Rooms.find(roomId)
+    if(currentRoom.owner === userIP){
+      await Rooms.remove(roomId)
+    }
     await Rooms.removeUser(roomId, userIP);
 }
 
@@ -146,15 +150,29 @@ export const roomHandlers = {
             if (nextTurn === room.users.length) {
                 nextTurn = 0;
             }
-
-            room.currentTurn = nextTurn;
             await room.save();
 
-            const newRoom = await Rooms.find(roomId);
+            let newRoom = await Rooms.find(roomId);
+            
+
             await io.to(roomId).emit('playersStates', {
               users: newRoom?.users,
               currentTurn: newRoom.currentTurn,
             });
+
+            room.currentTurn = nextTurn;
+            await room.save();
+
+            await io.to(roomId).emit('willBuy', {
+              users: newRoom?.users,
+              currentTurn: newRoom.currentTurn,
+            })
+
+            // newRoom = await Rooms.find(roomId);
+            // await io.to(roomId).emit('playersStates', {
+            //   users: newRoom?.users,
+            //   currentTurn: newRoom.currentTurn,
+            // });
           } catch (err) {
             console.log(err);
           }
