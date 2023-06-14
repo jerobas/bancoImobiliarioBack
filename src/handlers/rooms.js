@@ -3,12 +3,13 @@
 /* eslint-disable indent */
 import * as Rooms from '../repositories/rooms.js';
 import * as User from '../repositories/users.js';
+import * as Cells from '../repositories/cell.js';
 import { formatUserIp } from '../utils/users.js';
-
+import cellPrices from '../constants/cells.js'
 
 async function removeUserFromRoom(roomId, userIP) {
     const currentRoom = await Rooms.find(roomId)
-    if(currentRoom.owner === userIP){
+    if(currentRoom && currentRoom.owner === userIP){
       await Rooms.remove(roomId)
     }
     await Rooms.removeUser(roomId, userIP);
@@ -107,14 +108,18 @@ export const roomHandlers = {
         roomId, value, userEmail, numberOfCells,
     }) => {
         try {
+            let currentUser = null
+            let userId = null
             const room = await Rooms.find(roomId);
-            const sumOfDices = Number(value.d1) + Number(value.d2);
+            // const sumOfDices = Number(value.d1) + Number(value.d2);
+            const sumOfDices = 2
             let nextTurn = room.currentTurn + 1;
             const promises = [];
 
             const userPromises = room.users.map(async (user) => {
               if (user.userName === userEmail) {
-                const currentUser = await User.find(user._id);
+                userId = user._id
+                currentUser = await User.find(user._id);
 
                 if (currentUser.state != 0) {
                     if (value.d1 === value.d2) {
@@ -125,12 +130,14 @@ export const roomHandlers = {
                     }
                 } else if (value.d1 === value.d2 && currentUser.numberOfEqualDices === 2) {
                   promises.push(User.update(user._id, { numberOfEqualDices: 0, position: 30, state: 3 }));
+                  io.to(roomId).emit('eventMessage', 'Você foi preso meu amigo!')
                 } else if (value.d1 === value.d2) {
                   promises.push(User.update(user._id, { $inc: { numberOfEqualDices: 1 }, position: (sumOfDices + user.position) % numberOfCells }));
                   nextTurn = room.currentTurn;
                 } else if (sumOfDices + user.position >= numberOfCells) {
                   promises.push(
                     User.update(user._id, {
+                      numberOfEqualDices: 0, // reseta valor de dados iguais
                       position: (sumOfDices + user.position) % numberOfCells,
                       money: Number(user.money) + 200,
                     }),
@@ -143,9 +150,10 @@ export const roomHandlers = {
                   );
                 }
               }
+              
             });
-
             await Promise.all(userPromises);
+            
 
             if (nextTurn === room.users.length) {
                 nextTurn = 0;
@@ -163,16 +171,40 @@ export const roomHandlers = {
             room.currentTurn = nextTurn;
             await room.save();
 
-            await io.to(roomId).emit('willBuy', {
-              users: newRoom?.users,
-              currentTurn: newRoom.currentTurn,
-            })
+            await Cells.createCell(room._id, userId)
+            
+            currentUser = await User.find(userId);
 
-            // newRoom = await Rooms.find(roomId);
-            // await io.to(roomId).emit('playersStates', {
-            //   users: newRoom?.users,
-            //   currentTurn: newRoom.currentTurn,
-            // });
+            const cell = await Cells.getById(currentUser.position, room._id);
+            const currentCell = cellPrices.find(element => element.id === currentUser.position)
+
+            // se tiver casa ele tem q pagar o aluguel
+            if(cell && currentUser.money >= currentCell.rent) {
+              await User.update(currentUser._id, {
+                money: currentUser.money - currentCell.rent,
+              })
+            }
+
+            currentUser = await User.find(userId);
+
+            //vai comprar se tiver dinheiro e não for hotel, praia, evento
+            if(currentCell && currentUser.money >= currentCell.priceToBuyAndSell){
+              await io.to(roomId).emit('willBuy',  {
+                canBuy: true,
+                price: currentCell.priceToBuyAndSell
+              })
+              return
+            }
+            // currentUser = await User.find(userId);
+            // //paga o aluguel e muda turno
+              
+
+              newRoom = await Rooms.find(roomId);
+              await io.to(roomId).emit('playersStates', {
+                users: newRoom?.users,
+                currentTurn: newRoom.currentTurn,
+              });
+
           } catch (err) {
             console.log(err);
           }
