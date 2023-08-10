@@ -38,7 +38,7 @@ const createIfDontExist = async ({
     userName: socketId,
     userIP,
     position: 0,
-    money: 0,
+    money: 5000,
     cards: [],
 }).save();
 

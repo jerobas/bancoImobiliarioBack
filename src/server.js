@@ -13,6 +13,7 @@ import { gameService } from './handlers/game.js';
 import { startRoomHandlers, roomWhenDisconnect } from './handlers/rooms.js';
 import { Rooms, Users } from './models/index.js';
 import errorService from './handlers/error.js'
+import { formatUserIp } from './utils/users.js';
 
 dotenv.config();
 const mongoURL = process.env.MONGOURL_ATLAS;
@@ -29,6 +30,8 @@ const io = new Server(httpServer, {
 
 const main = (socket) => {
   const handleError = new errorService(socket, io)
+  
+  socket.emit('myIP', formatUserIp(socket.handshake.address))
 
   startRoomHandlers(socket, io, handleError);
   chatService(socket, io, handleError);
