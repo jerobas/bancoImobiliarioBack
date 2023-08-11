@@ -5,10 +5,10 @@ const getAll = async () => await Cells.find().exec()
 
 const getById = async (cellId, roomId) => await Cells.findOne({cellId: cellId, currentRoom: roomId}).exec()
 
-const createCell = async (roomId, userId) => {
+const createCell = async (roomId, userId, cellId) => {
     return new Cells({
         owner: userId,
-        cellId: 2,
+        cellId: cellId,
         currentRoom: roomId
     }).save();
 }
