@@ -180,7 +180,10 @@ export const roomHandlers = {
                   state: 3,
                 })
               );
-              io.to(roomId).emit("eventMessage", "Você foi preso meu amigo!");
+              io.to(currentUser.socketId).emit(
+                "eventMessage",
+                "Você foi preso meu amigo!"
+              );
             } else if (value.d1 === value.d2) {
               promises.push(
                 User.update(user._id, {
@@ -258,14 +261,23 @@ export const roomHandlers = {
             check = true;
             // ai comeca a compra ai papai
             if (data) {
-                await User.update(currentUser._id, {
-                  money: Number(currentUser.money) - currentCell.priceToBuyAndSell,
+              await User.update(currentUser._id, {
+                money:
+                  Number(currentUser.money) - currentCell.priceToBuyAndSell,
+              });
+              let _cell = await Cells.createCell(
+                room._id,
+                userId,
+                currentCell.id
+              );
+              if (_cell) {
+                io.to(roomId).emit("buyedCell", {
+                  newRoom,
+                  currentUser,
+                  currentCell,
                 });
-                let _cell = await Cells.createCell(room._id, userId, currentCell.id);
-                if(_cell){
-                  io.to(roomId).emit('buyedCell', {newRoom, currentUser, currentCell})
-                }
-                updateTurn(roomId, io);
+              }
+              updateTurn(roomId, io);
             }
           });
         } else {
