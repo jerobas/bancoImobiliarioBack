@@ -223,7 +223,7 @@ export const roomHandlers = {
         room.currentTurn = nextTurn;
         await room.save();
 
-        await Cells.createCell(room._id, userId);
+        // await Cells.createCell(room._id, userId);
 
         currentUser = await User.find(userId);
 
@@ -261,6 +261,10 @@ export const roomHandlers = {
                 await User.update(currentUser._id, {
                   money: Number(currentUser.money) - currentCell.priceToBuyAndSell,
                 });
+                let _cell = await Cells.createCell(room._id, userId, currentCell.id);
+                if(_cell){
+                  io.to(roomId).emit('buyedCell', {newRoom, currentUser, currentCell})
+                }
                 updateTurn(roomId, io);
             }
           });

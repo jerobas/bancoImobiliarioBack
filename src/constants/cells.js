@@ -158,6 +158,46 @@ const cellPrices = [
         id: 32,
         priceToBuyAndSell: 200,
         rent: 350
+    },
+    {
+        id: 33,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 34,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 35,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 36,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 37,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 38,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 39,
+        priceToBuyAndSell: 200,
+        rent: 350
+    },
+    {
+        id: 40,
+        priceToBuyAndSell: 200,
+        rent: 350
     }
 ];
 
