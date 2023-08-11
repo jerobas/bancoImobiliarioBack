@@ -243,7 +243,7 @@ export const roomHandlers = {
 
         //vai comprar se tiver dinheiro e não for hotel, praia, evento
         if (currentCell && currentUser.money >= currentCell.priceToBuyAndSell) {
-          await io.to(roomId).emit("willBuy", {
+          await io.to(currentUser.socketId).emit("willBuy", {
             canBuy: true,
             price: currentCell.priceToBuyAndSell,
           });
