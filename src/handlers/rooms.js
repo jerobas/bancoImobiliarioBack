@@ -197,6 +197,9 @@ export const roomHandlers = {
                 "Você foi preso meu amigo!"
               );
             } else {
+              if (value.d1 === value.d2) {
+                nextTurn = room.currentTurn;
+              }
               const isEqual =
                 value.d1 === value.d2
                   ? {
@@ -270,12 +273,15 @@ export const roomHandlers = {
             setTimeout(() => {
               if (check) return;
               check = true;
+              io.to(currentUser.socketId).emit(
+                "eventMessage",
+                "Você demorou muito!"
+              );
               updateTurn(roomId, io);
             }, 5000);
             socket.once("buyResponse", async (data) => {
               if (check) return;
               check = true;
-              // ai comeca a compra ai papai
               if (data) {
                 await User.update(currentUser._id, {
                   money:
