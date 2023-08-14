@@ -14,10 +14,11 @@ const createCell = async (roomId, userId, cellId) => {
   }).save();
 };
 
-const updateOwner = async (cellId, newState) => {
+const update = async (cellId, newState) => {
   await Cells.findOneAndUpdate({ _id: cellId }, { ...newState });
 };
 
-export { getAll, getById, createCell, updateOwner };
+
+export { getAll, getById, createCell, update };
 
 // buy / sell/ addProps/ event

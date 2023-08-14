@@ -8,6 +8,8 @@ import * as User from "../repositories/users.js";
 import * as Cells from "../repositories/cell.js";
 import { formatUserIp } from "../utils/users.js";
 import cellPrices from "../constants/cells.js";
+import cellValues from "../constants/cellValues.js";
+import { calculateRentWithProps } from "../utils/rentCalculation.js";
 
 async function removeUserFromRoom(roomId, userIP) {
   const currentRoom = await Rooms.find(roomId);
@@ -16,8 +18,8 @@ async function removeUserFromRoom(roomId, userIP) {
     currentRoom.users.map((user) => {
       removePromise.push(Rooms.removeUser(roomId, user.userIP));
     });
-    await Promise.all(removePromise)
-    await Rooms.remove(roomId)
+    await Promise.all(removePromise);
+    await Rooms.remove(roomId);
   } else {
     await Rooms.removeUser(roomId, userIP);
   }
@@ -252,29 +254,31 @@ export const roomHandlers = {
         );
 
         // se tiver casa ele tem q pagar o aluguel
-        if (cell && currentUser.money >= currentCell.rent) {
+        if (
+          cell &&
+          currentUser.money >=
+            calculateRentWithProps(currentCell.rent, cell.buildLevel)
+        ) {
           await User.update(currentUser._id, {
-            money: currentUser.money - currentCell.rent,
+            money:
+              currentUser.money -
+              calculateRentWithProps(currentCell.rent, cell.buildLevel),
           });
           await User.update(cell.owner, {
-            $inc: { money: currentCell.rent },
+            $inc: {
+              money: calculateRentWithProps(currentCell.rent, cell.buildLevel),
+            },
           });
         }
 
         currentUser = await User.find(userId);
 
         //vai comprar se tiver dinheiro e não for hotel, praia, evento
-        if (
-          currentCell &&
-          currentCell.canBuy &&
-          currentUser.money >= currentCell.priceToBuyAndSell
-        ) {
-          if (cell && cell.owner === currentUser._id) {
-            // faz upgrade
-          } else {
+        if (cell && cell.owner === currentUser._id && cell.buildLevel <= 5) {
+          if (currentUser.money >= currentCell.rent * cellValues.addProps) {
             await io.to(currentUser.socketId).emit("willBuy", {
               canBuy: true,
-              price: currentCell.priceToBuyAndSell,
+              price: currentCell.rent * cellValues.addProps,
             });
             let check = false;
             setTimeout(() => {
@@ -292,45 +296,79 @@ export const roomHandlers = {
               if (data) {
                 await User.update(currentUser._id, {
                   money:
-                    Number(currentUser.money) - currentCell.priceToBuyAndSell,
+                    Number(currentUser.money) -
+                    currentCell.rent * cellValues.addProps,
                 });
-                if (cell) {
-                  let resPromises = [];
+                await Cells.update(cell._id, {
+                  $inc: { buildLevel: +1 },
+                });
+                updateTurn(roomId, io);
+              }
+            });
+          }
+        } else if (
+          currentCell &&
+          currentCell.canBuy &&
+          currentUser.money >= currentCell.priceToBuyAndSell
+        ) {
+          await io.to(currentUser.socketId).emit("willBuy", {
+            canBuy: true,
+            price: currentCell.priceToBuyAndSell,
+          });
+          let check = false;
+          setTimeout(() => {
+            if (check) return;
+            check = true;
+            io.to(currentUser.socketId).emit(
+              "eventMessage",
+              "Você demorou muito!"
+            );
+            updateTurn(roomId, io);
+          }, 5000);
+          socket.once("buyResponse", async (data) => {
+            if (check) return;
+            check = true;
+            if (data) {
+              await User.update(currentUser._id, {
+                money:
+                  Number(currentUser.money) - currentCell.priceToBuyAndSell,
+              });
+              if (cell) {
+                let resPromises = [];
 
-                  resPromises.push(
-                    User.update(cell.owner, {
-                      $inc: { money: Number(currentCell.priceToBuyAndSell) },
-                    })
-                  );
-                  resPromises.push(
-                    Cells.updateOwner(cell._id, { owner: currentUser._id })
-                  );
+                resPromises.push(
+                  User.update(cell.owner, {
+                    $inc: { money: Number(currentCell.priceToBuyAndSell) },
+                  })
+                );
+                resPromises.push(
+                  Cells.update(cell._id, { owner: currentUser._id })
+                );
 
-                  await Promise.all(resPromises);
+                await Promise.all(resPromises);
 
+                io.to(roomId).emit("buyedCell", {
+                  newRoom,
+                  currentUser,
+                  currentCell,
+                });
+              } else {
+                let _cell = await Cells.createCell(
+                  room._id,
+                  userId,
+                  currentCell.id
+                );
+                if (_cell) {
                   io.to(roomId).emit("buyedCell", {
                     newRoom,
                     currentUser,
                     currentCell,
                   });
-                } else {
-                  let _cell = await Cells.createCell(
-                    room._id,
-                    userId,
-                    currentCell.id
-                  );
-                  if (_cell) {
-                    io.to(roomId).emit("buyedCell", {
-                      newRoom,
-                      currentUser,
-                      currentCell,
-                    });
-                  }
                 }
-                updateTurn(roomId, io);
               }
-            });
-          }
+              updateTurn(roomId, io);
+            }
+          });
         } else {
           updateTurn(roomId, io);
         }

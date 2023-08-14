@@ -1,9 +1,10 @@
 const cellValues = {
-    house1: 5,
-    house2: 15,
-    house3: 52.5,
-    house4: 70,
-    hotel: 85,
+    0: 1, // sem casa
+    1: 5, // 1 casa
+    2: 15, // 2 casas
+    3: 52.5, // 3 casas
+    4: 70, // 4 casas
+    5: 85, // hotel
     addProps: 7.5
 }
 
