@@ -276,7 +276,7 @@ export const roomHandlers = {
         if (
           cell &&
           cell.owner.equals(currentUser._id) &&
-          cell.buildLevel <= 5
+          cell.buildLevel < 5
         ) {
           if (currentUser.money >= currentCell.rent * cellValues.addProps) {
             await io.to(currentUser.socketId).emit("willBuy", {
