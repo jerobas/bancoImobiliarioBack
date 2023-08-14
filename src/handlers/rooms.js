@@ -254,11 +254,10 @@ export const roomHandlers = {
         );
 
         // se tiver casa ele tem q pagar o aluguel
-        if (
-          cell &&
-          currentUser.money >=
-            calculateRentWithProps(currentCell.rent, cell.buildLevel)
-        ) {
+        // &&
+        //   currentUser.money >=
+        //     calculateRentWithProps(currentCell.rent, cell.buildLevel)
+        if (cell) {
           await User.update(currentUser._id, {
             money:
               currentUser.money -
