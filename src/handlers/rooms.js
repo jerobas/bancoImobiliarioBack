@@ -12,17 +12,24 @@ import cellPrices from "../constants/cells.js";
 async function removeUserFromRoom(roomId, userIP) {
   const currentRoom = await Rooms.find(roomId);
   if (currentRoom && currentRoom.owner === userIP) {
-    await Rooms.remove(roomId);
+    let removePromise = [];
+    currentRoom.users.map((user) => {
+      removePromise.push(Rooms.removeUser(roomId, user.userIP));
+    });
+    await Promise.all(removePromise)
+    await Rooms.remove(roomId)
+  } else {
+    await Rooms.removeUser(roomId, userIP);
   }
-  await Rooms.removeUser(roomId, userIP);
 }
 
 async function updateTurn(roomId, io) {
   let newRoom = await Rooms.find(roomId);
-  await io.to(roomId).emit("playersStates", {
-    users: newRoom?.users,
-    currentTurn: newRoom.currentTurn,
-  });
+  if (newRoom)
+    await io.to(roomId).emit("playersStates", {
+      users: newRoom?.users,
+      currentTurn: newRoom.currentTurn,
+    });
 }
 
 async function getAllRooms(socket) {
@@ -306,7 +313,6 @@ export const roomHandlers = {
                     currentUser,
                     currentCell,
                   });
-
                 } else {
                   let _cell = await Cells.createCell(
                     room._id,
