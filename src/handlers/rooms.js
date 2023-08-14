@@ -274,7 +274,11 @@ export const roomHandlers = {
         currentUser = await User.find(userId);
 
         //vai comprar se tiver dinheiro e não for hotel, praia, evento
-        if (cell && cell.owner === currentUser._id && cell.buildLevel <= 5) {
+        if (
+          cell &&
+          cell.owner.equals(currentUser._id) &&
+          cell.buildLevel <= 5
+        ) {
           if (currentUser.money >= currentCell.rent * cellValues.addProps) {
             await io.to(currentUser.socketId).emit("willBuy", {
               canBuy: true,
