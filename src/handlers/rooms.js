@@ -287,17 +287,26 @@ export const roomHandlers = {
                   money:
                     Number(currentUser.money) - currentCell.priceToBuyAndSell,
                 });
-                let _cell = await Cells.createCell(
-                  room._id,
-                  userId,
-                  currentCell.id
-                );
-                if (_cell) {
-                  io.to(roomId).emit("buyedCell", {
-                    newRoom,
-                    currentUser,
-                    currentCell,
-                  });
+                if (cell) {
+                  await Cells.updateOwner(cell._id, { owner: currentUser._id });
+                  // io.to(roomId).emit("RebuyedCell", {
+                  //   newRoom,
+                  //   currentUser,
+                  //   currentCell,
+                  // });
+                } else {
+                  let _cell = await Cells.createCell(
+                    room._id,
+                    userId,
+                    currentCell.id
+                  );
+                  if (_cell) {
+                    io.to(roomId).emit("buyedCell", {
+                      newRoom,
+                      currentUser,
+                      currentCell,
+                    });
+                  }
                 }
                 updateTurn(roomId, io);
               }

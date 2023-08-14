@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 export const cellSchema = new mongoose.Schema({
-  owner: { type: mongoose.Schema.Types.ObjectId, name: 'User' },
+  owner: { type: mongoose.Schema.Types.ObjectId, name: "User" },
   cellId: Number,
   buildLevel: {
     type: Number,
@@ -11,12 +11,17 @@ export const cellSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // hasEvent: {
-  //   type: Boolean,
-  //   default: false,
-  //   set: (value) => !(!this.canHaveEvent(value) || !value),
-  // },
-  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
+  hasEvent: {
+    type: Boolean,
+    default: false, 
+    set: function (value) {
+      if (this.canHaveEvent && value) {
+        return true;
+      }
+      return false;
+    },
+  },
+  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
 });
 
 export const userSchema = new mongoose.Schema({
@@ -27,7 +32,7 @@ export const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
+  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
   joinedAt: {
     type: Date,
     default: Date.now,
@@ -43,38 +48,41 @@ export const userSchema = new mongoose.Schema({
   cards: [],
 });
 
-export const roomSchema = new mongoose.Schema({
-  roomId: String,
-  roomName: String,
-  password: String,
+export const roomSchema = new mongoose.Schema(
+  {
+    roomId: String,
+    roomName: String,
+    password: String,
 
-  // user-related
-  owner: String,
-  users: [{ $type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  diceWinners: [mongoose.Schema.Types.ObjectId],
-  maxUsers: {
-    $type: Number,
-    default: 4,
-  },
-
-  // game-related
-  currentTurn: Number,
-  state: {
-    type: String,
-    duration: String,
-  },
-}, {
-  virtuals: {
-    isFull: {
-      get() {
-        return this.users?.length === this.maxUsers;
-      },
+    // user-related
+    owner: String,
+    users: [{ $type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    diceWinners: [mongoose.Schema.Types.ObjectId],
+    maxUsers: {
+      $type: Number,
+      default: 4,
     },
-    hasPassword: {
-      get() {
-        return this.password.length > 0;
-      },
+
+    // game-related
+    currentTurn: Number,
+    state: {
+      type: String,
+      duration: String,
     },
   },
-  typeKey: '$type',
-});
+  {
+    virtuals: {
+      isFull: {
+        get() {
+          return this.users?.length === this.maxUsers;
+        },
+      },
+      hasPassword: {
+        get() {
+          return this.password.length > 0;
+        },
+      },
+    },
+    typeKey: "$type",
+  }
+);
