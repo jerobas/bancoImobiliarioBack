@@ -288,12 +288,25 @@ export const roomHandlers = {
                     Number(currentUser.money) - currentCell.priceToBuyAndSell,
                 });
                 if (cell) {
-                  await Cells.updateOwner(cell._id, { owner: currentUser._id });
-                  // io.to(roomId).emit("RebuyedCell", {
-                  //   newRoom,
-                  //   currentUser,
-                  //   currentCell,
-                  // });
+                  let resPromises = [];
+
+                  resPromises.push(
+                    User.update(cell.owner, {
+                      $inc: { money: Number(currentCell.priceToBuyAndSell) },
+                    })
+                  );
+                  resPromises.push(
+                    Cells.updateOwner(cell._id, { owner: currentUser._id })
+                  );
+
+                  await Promise.all(resPromises);
+
+                  io.to(roomId).emit("buyedCell", {
+                    newRoom,
+                    currentUser,
+                    currentCell,
+                  });
+
                 } else {
                   let _cell = await Cells.createCell(
                     room._id,
