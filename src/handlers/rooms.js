@@ -3,18 +3,18 @@
 /* eslint-disable indent */
 // pra pagar pra sair da cadeia é 10% do seu money
 
-import * as Rooms from "../repositories/rooms.js";
-import * as User from "../repositories/users.js";
-import * as Cells from "../repositories/cell.js";
-import { formatUserIp } from "../utils/users.js";
-import cellPrices from "../constants/cells.js";
-import cellValues from "../constants/cellValues.js";
-import { calculateRentWithProps } from "../utils/rentCalculation.js";
+import cellPrices from '../constants/cells.js';
+import cellValues from '../constants/cellValues.js';
+import * as Cells from '../repositories/cell.js';
+import * as Rooms from '../repositories/rooms.js';
+import * as User from '../repositories/users.js';
+import { calculateRentWithProps } from '../utils/rentCalculation.js';
+import { formatUserIp } from '../utils/users.js';
 
 async function removeUserFromRoom(roomId, userIP) {
   const currentRoom = await Rooms.find(roomId);
   if (currentRoom && currentRoom.owner === userIP) {
-    let removePromise = [];
+    const removePromise = [];
     currentRoom.users.map((user) => {
       removePromise.push(Rooms.removeUser(roomId, user.userIP));
     });
@@ -26,18 +26,19 @@ async function removeUserFromRoom(roomId, userIP) {
 }
 
 async function updateTurn(roomId, io) {
-  let newRoom = await Rooms.find(roomId);
-  if (newRoom)
-    await io.to(roomId).emit("playersStates", {
+  const newRoom = await Rooms.find(roomId);
+  if (newRoom) {
+ await io.to(roomId).emit('playersStates', {
       users: newRoom?.users,
       currentTurn: newRoom.currentTurn,
     });
+}
 }
 
 async function getAllRooms(socket) {
   const rooms = await Rooms.getAll();
   if (rooms && rooms.length > 0) {
-    socket.emit("updateRooms", {
+    socket.emit('updateRooms', {
       numberOfRooms: rooms.length,
       rooms: rooms.map((room) => [
         room.roomName,
@@ -48,7 +49,7 @@ async function getAllRooms(socket) {
       ]),
     });
   } else {
-    socket.emit("updateRooms", {
+    socket.emit('updateRooms', {
       numberOfRooms: 0,
       rooms: null,
     });
@@ -57,8 +58,7 @@ async function getAllRooms(socket) {
 
 export const roomHandlers = {
   create:
-    (socket, io, handleError) =>
-    async ({ roomName, password }) => {
+    (socket, io, handleError) => async ({ roomName, password }) => {
       try {
         const createdRoom = await Rooms.create({
           roomName,
@@ -66,38 +66,37 @@ export const roomHandlers = {
           owner: formatUserIp(socket.handshake.address),
         });
         if (createdRoom) {
-          socket.emit("created", createdRoom);
+          socket.emit('created', createdRoom);
           getAllRooms(socket);
         } else {
           handleError.sendGlobalError(`A sala ${roomName} já existe!`);
         }
       } catch (error) {
         console.error(error);
-        socket.emit("roomCreated", error);
+        socket.emit('roomCreated', error);
       }
     },
 
   join:
-    (socket, io, handleError) =>
-    async ({ roomId, password, userEmail }) => {
+    (socket, io, handleError) => async ({ roomId, password, userEmail }) => {
       try {
         const room = await Rooms.find(roomId);
         if (room) {
-          if (room.state.type !== "idle") {
-            handleError.sendGlobalError(`Esse jogo já começou!`);
-            return socket.emit("joined", false);
+          if (room.state.type !== 'idle') {
+            handleError.sendGlobalError('Esse jogo já começou!');
+            return socket.emit('joined', false);
           }
           if (room.isFull) {
-            handleError.sendGlobalError(`Essa sala está cheia!`);
-            return socket.emit("joined", false);
+            handleError.sendGlobalError('Essa sala está cheia!');
+            return socket.emit('joined', false);
           }
           if (room.password.length > 0 && room.password !== password) {
-            handleError.sendGlobalError(`A senha esta incorreta!`);
-            return socket.emit("joined", false);
+            handleError.sendGlobalError('A senha esta incorreta!');
+            return socket.emit('joined', false);
           }
           if (room.users.find((user) => user.userName === userEmail)) {
-            handleError.sendGlobalError("Você ja está nessa sala!");
-            return socket.emit("joined", false);
+            handleError.sendGlobalError('Você ja está nessa sala!');
+            return socket.emit('joined', false);
           }
 
           await Rooms.addUser(
@@ -105,16 +104,16 @@ export const roomHandlers = {
             userEmail,
             socket.id,
             formatUserIp(socket.handshake.address),
-            room._id
+            room._id,
           );
           socket.join(roomId);
 
           await room.save();
-          socket.emit("joined", roomId);
+          socket.emit('joined', roomId);
           return getAllRooms(socket);
         }
       } catch (error) {
-        return console.log("Erro ao buscar sala:", error);
+        return console.log('Erro ao buscar sala:', error);
       }
     },
 
@@ -122,13 +121,13 @@ export const roomHandlers = {
 
   getUsers: (socket, io, handleError) => async (roomId) => {
     const room = await Rooms.find(roomId);
-    io.to(roomId).emit("returnPlayer", room?.users);
+    io.to(roomId).emit('returnPlayer', room?.users);
   },
 
   getOwner: (socket, io, handleError) => async (roomId) => {
     const room = await Rooms.find(roomId);
     if (room) {
-      io.to(roomId).emit("returnOwner", room.owner);
+      io.to(roomId).emit('returnOwner', room.owner);
     }
   },
 
@@ -149,7 +148,7 @@ export const roomHandlers = {
             money: Number(user.money) - 50,
           });
         } else {
-          handleError.sendGlobalError(`Você não tem dinheiro suficiente!`);
+          handleError.sendGlobalError('Você não tem dinheiro suficiente!');
         }
       }
     } catch (error) {
@@ -158,8 +157,9 @@ export const roomHandlers = {
   },
 
   rollDices:
-    (socket, io, handleError) =>
-    async ({ roomId, value, userEmail, numberOfCells }) => {
+    (socket, io, handleError) => async ({
+ roomId, value, userEmail, numberOfCells,
+}) => {
       try {
         let currentUser = null;
         let userId = null;
@@ -178,20 +178,20 @@ export const roomHandlers = {
               if (value.d1 === value.d2) {
                 promises.push(User.update(user._id, { state: 0 }));
                 io.to(currentUser.socketId).emit(
-                  "eventMessage",
-                  "Você foi solto meu amigo!"
+                  'eventMessage',
+                  'Você foi solto meu amigo!',
                 );
                 nextTurn = room.currentTurn;
               } else {
                 promises.push(User.update(user._id, { $inc: { state: -1 } }));
                 io.to(currentUser.socketId).emit(
-                  "eventMessage",
-                  "Não foi dessa vez!"
+                  'eventMessage',
+                  'Não foi dessa vez!',
                 );
               }
             } else if (
-              value.d1 === value.d2 &&
-              currentUser.numberOfEqualDices === 2
+              value.d1 === value.d2
+              && currentUser.numberOfEqualDices === 2
             ) {
               // ele vai ser preso, pq tirou igual e ja tinha 2 no contador de iguais
               promises.push(
@@ -199,18 +199,17 @@ export const roomHandlers = {
                   numberOfEqualDices: 0,
                   position: 30,
                   state: 3,
-                })
+                }),
               );
               io.to(currentUser.socketId).emit(
-                "eventMessage",
-                "Você foi preso meu amigo!"
+                'eventMessage',
+                'Você foi preso meu amigo!',
               );
             } else {
               if (value.d1 === value.d2) {
                 nextTurn = room.currentTurn;
               }
-              const isEqual =
-                value.d1 === value.d2
+              const isEqual = value.d1 === value.d2
                   ? {
                       $inc: { numberOfEqualDices: 1 },
                     }
@@ -224,7 +223,7 @@ export const roomHandlers = {
                     sumOfDices + user.position >= numberOfCells
                       ? Number(user.money) + 200
                       : Number(user.money),
-                })
+                }),
               );
             }
           }
@@ -236,9 +235,9 @@ export const roomHandlers = {
         }
         await room.save();
 
-        let newRoom = await Rooms.find(roomId);
+        const newRoom = await Rooms.find(roomId);
 
-        await io.to(roomId).emit("playersStates", {
+        await io.to(roomId).emit('playersStates', {
           users: newRoom?.users,
           currentTurn: newRoom.currentTurn,
         });
@@ -250,7 +249,7 @@ export const roomHandlers = {
 
         const cell = await Cells.getById(currentUser.position, room._id);
         const currentCell = cellPrices.find(
-          (element) => element.id === currentUser.position
+          (element) => element.id === currentUser.position,
         );
 
         // se tiver casa ele tem q pagar o aluguel
@@ -260,8 +259,8 @@ export const roomHandlers = {
         if (cell) {
           await User.update(currentUser._id, {
             money:
-              currentUser.money -
-              calculateRentWithProps(currentCell.rent, cell.buildLevel),
+              currentUser.money
+              - calculateRentWithProps(currentCell.rent, cell.buildLevel),
           });
           await User.update(cell.owner, {
             $inc: {
@@ -272,14 +271,14 @@ export const roomHandlers = {
 
         currentUser = await User.find(userId);
 
-        //vai comprar se tiver dinheiro e não for hotel, praia, evento
+        // vai comprar se tiver dinheiro e não for hotel, praia, evento
         if (
-          cell &&
-          cell.owner.equals(currentUser._id) &&
-          cell.buildLevel < 5
+          cell
+          && cell.owner.equals(currentUser._id)
+          && cell.buildLevel < 5
         ) {
           if (currentUser.money >= currentCell.rent * cellValues.addProps) {
-            await io.to(currentUser.socketId).emit("willBuy", {
+            await io.to(currentUser.socketId).emit('willBuy', {
               canBuy: true,
               price: currentCell.rent * cellValues.addProps,
             });
@@ -288,19 +287,19 @@ export const roomHandlers = {
               if (check) return;
               check = true;
               io.to(currentUser.socketId).emit(
-                "eventMessage",
-                "Você demorou muito!"
+                'eventMessage',
+                'Você demorou muito!',
               );
               updateTurn(roomId, io);
             }, 5000);
-            socket.once("buyResponse", async (data) => {
+            socket.once('buyResponse', async (data) => {
               if (check) return;
               check = true;
               if (data) {
                 await User.update(currentUser._id, {
                   money:
-                    Number(currentUser.money) -
-                    currentCell.rent * cellValues.addProps,
+                    Number(currentUser.money)
+                    - currentCell.rent * cellValues.addProps,
                 });
                 await Cells.update(cell._id, {
                   $inc: { buildLevel: +1 },
@@ -310,11 +309,11 @@ export const roomHandlers = {
             });
           }
         } else if (
-          currentCell &&
-          currentCell.canBuy &&
-          currentUser.money >= currentCell.priceToBuyAndSell
+          currentCell
+          && currentCell.canBuy
+          && currentUser.money >= currentCell.priceToBuyAndSell
         ) {
-          await io.to(currentUser.socketId).emit("willBuy", {
+          await io.to(currentUser.socketId).emit('willBuy', {
             canBuy: true,
             price: currentCell.priceToBuyAndSell,
           });
@@ -323,12 +322,12 @@ export const roomHandlers = {
             if (check) return;
             check = true;
             io.to(currentUser.socketId).emit(
-              "eventMessage",
-              "Você demorou muito!"
+              'eventMessage',
+              'Você demorou muito!',
             );
             updateTurn(roomId, io);
           }, 5000);
-          socket.once("buyResponse", async (data) => {
+          socket.once('buyResponse', async (data) => {
             if (check) return;
             check = true;
             if (data) {
@@ -337,32 +336,32 @@ export const roomHandlers = {
                   Number(currentUser.money) - currentCell.priceToBuyAndSell,
               });
               if (cell) {
-                let resPromises = [];
+                const resPromises = [];
 
                 resPromises.push(
                   User.update(cell.owner, {
                     $inc: { money: Number(currentCell.priceToBuyAndSell) },
-                  })
+                  }),
                 );
                 resPromises.push(
-                  Cells.update(cell._id, { owner: currentUser._id })
+                  Cells.update(cell._id, { owner: currentUser._id }),
                 );
 
                 await Promise.all(resPromises);
 
-                io.to(roomId).emit("buyedCell", {
+                io.to(roomId).emit('buyedCell', {
                   newRoom,
                   currentUser,
                   currentCell,
                 });
               } else {
-                let _cell = await Cells.createCell(
+                const _cell = await Cells.createCell(
                   room._id,
                   userId,
-                  currentCell.id
+                  currentCell.id,
                 );
                 if (_cell) {
-                  io.to(roomId).emit("buyedCell", {
+                  io.to(roomId).emit('buyedCell', {
                     newRoom,
                     currentUser,
                     currentCell,

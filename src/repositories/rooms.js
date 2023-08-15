@@ -7,12 +7,13 @@ import States from '../constants/rooms/states.js';
 import { Rooms } from '../models/index.js';
 import { isValidRoomName } from '../utils/rooms.js';
 import * as Users from './users.js';
+
 const getAll = async () => await Rooms.find().populate('users').exec();
 
-const findIfExistsByName = async(roomName) => {
+const findIfExistsByName = async (roomName) => {
     const room = await Rooms.findOne({ roomName }).exec();
     return room;
-}
+};
 
 const findIfExists = async (roomId) => {
     const room = await Rooms.findOne({ roomId }).populate('users').exec();
@@ -29,7 +30,7 @@ const find = async (roomId) => {
 
 const remove = async (roomId) => {
     const room = await find(roomId);
-    await Rooms.deleteOne({_id: room._id});
+    await Rooms.deleteOne({ _id: room._id });
 };
 
 const removeAll = async () => Rooms.deleteMany({});
@@ -37,8 +38,8 @@ const removeAll = async () => Rooms.deleteMany({});
 const create = async ({ roomName, password, owner }) => {
     try {
         const roomId = nanoid(8);
-        if (!isValidRoomName(roomName)) return false
-        if (await findIfExistsByName(roomName)) return false
+        if (!isValidRoomName(roomName)) return false;
+        if (await findIfExistsByName(roomName)) return false;
 
         return new Rooms({
             roomId,
@@ -49,7 +50,7 @@ const create = async ({ roomName, password, owner }) => {
             state: States.idle('indeterminate'),
         }).save();
     } catch (error) {
-        console.log(error)
+        console.log(error);
     }
 };
 

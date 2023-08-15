@@ -1,5 +1,3 @@
-import cellValues from "../constants/cellValues.js"
+import cellValues from '../constants/cellValues.js';
 
-export const calculateRentWithProps = (rent, buildLevel) => {
-    return rent * cellValues[buildLevel]
-}
+export const calculateRentWithProps = (rent, buildLevel) => rent * cellValues[buildLevel];

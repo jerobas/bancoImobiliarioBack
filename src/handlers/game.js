@@ -14,7 +14,7 @@ const updateRoomState = async (roomId, state, handleError) => {
     try {
         const oldRoom = await Rooms.update(roomId, { state });
         if (!oldRoom) {
-            handleError.sendGlobalError('Sala não encontrada!')
+            handleError.sendGlobalError('Sala não encontrada!');
         }
 
         handleChat.systemMessage(roomId, state.type);

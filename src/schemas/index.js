@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 export const cellSchema = new mongoose.Schema({
-  owner: { type: mongoose.Schema.Types.ObjectId, name: "User" },
+  owner: { type: mongoose.Schema.Types.ObjectId, name: 'User' },
   cellId: Number,
   buildLevel: {
     type: Number,
@@ -13,15 +13,15 @@ export const cellSchema = new mongoose.Schema({
   },
   hasEvent: {
     type: Boolean,
-    default: false, 
-    set: function (value) {
+    default: false,
+    set(value) {
       if (this.canHaveEvent && value) {
         return true;
       }
       return false;
     },
   },
-  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
 });
 
 export const userSchema = new mongoose.Schema({
@@ -32,7 +32,7 @@ export const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  currentRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   joinedAt: {
     type: Date,
     default: Date.now,
@@ -56,7 +56,7 @@ export const roomSchema = new mongoose.Schema(
 
     // user-related
     owner: String,
-    users: [{ $type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    users: [{ $type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     diceWinners: [mongoose.Schema.Types.ObjectId],
     maxUsers: {
       $type: Number,
@@ -83,6 +83,6 @@ export const roomSchema = new mongoose.Schema(
         },
       },
     },
-    typeKey: "$type",
-  }
+    typeKey: '$type',
+  },
 );
