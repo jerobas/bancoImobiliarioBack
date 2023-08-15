@@ -32,4 +32,4 @@ jobs:
         DISCORD_WEBHOOK: ${{secrets.DISCORD_WEBHOOK}}
       uses: Ilshidur/action-discord@master
       with:
-        args: 'The project has been deployed.'
+        args: '__O back-end do banco terminou o deploy ✅__'
