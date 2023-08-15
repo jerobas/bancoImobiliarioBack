@@ -19,8 +19,8 @@ Este projeto está sendo desenvolvido no tempo livre, e contribuições são bem
 
 ## Desenvolvedores
 
-- Flávio Silva ([flaviozno](https://github.com/flaviozno))
-- João Nolo ([Jaonolo](https://github.com/Jaonolo))
+- Flávio Filho ([flaviozno](https://github.com/flaviozno))
+- João Vitor ([Jaonolo](https://github.com/Jaonolo))
 
 ## Designer
 
