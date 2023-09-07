@@ -22,7 +22,7 @@ jobs:
       run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "sudo docker stop $(docker ps -a -q --filter ancestor=<image-name> --format="{{.ID}}") || true && sudo docker rm $(docker ps -a -q --filter ancestor=<image-name> --format="{{.ID}}") || true"
     
     - name: Delete old files with SSH
-      run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "rm -rf bancoImobiliarioBack"
+      run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "sudo rm -rf ~/bancoImobiliarioBack"
     
     - name: Copy files with SSH
       run: scp -i key.pem -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}:/home/${{secrets.REMOTE_USER}}
