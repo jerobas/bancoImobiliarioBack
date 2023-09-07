@@ -11,6 +11,7 @@ O objetivo deste projeto é criar uma plataforma online para um jogo de tabuleir
 - Node.js: Plataforma de desenvolvimento JavaScript.
 - Socket.io: Biblioteca para comunicação em tempo real entre clientes e servidor.
 - Mongoose: Biblioteca para interação com banco de dados MongoDB.
+- Docker e Docker-compose
 - Outras dependências podem ser encontradas no arquivo `package.json`.
 
 ## Contribuição

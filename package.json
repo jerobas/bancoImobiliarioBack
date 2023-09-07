@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon ./src/server.js",
+    "start": "nodemon ./src/server.js",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0 --fix"
   },
   "author": "",
