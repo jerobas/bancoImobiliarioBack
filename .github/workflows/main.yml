@@ -25,7 +25,7 @@ jobs:
       run: scp -i key.pem -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}}:/home/${{secrets.REMOTE_USER}}
         
     - name: Run API
-      run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "cp .env bancoImobiliarioBack/; cd bancoImobiliarioBack; docker compose up"
+      run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "cp .env bancoImobiliarioBack/; cd bancoImobiliarioBack; sudo docker compose up"
     
     - name: Discord notification
       env:
