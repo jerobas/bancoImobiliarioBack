@@ -18,8 +18,8 @@ jobs:
     - name: Chmod created key.pem file
       run: sudo chmod 400 key.pem
 
-    - name: Stop and Delete Container
-      run: sudo docker stop bancoimobiliarioback-app; sudo docker rm bancoimobiliarioback-app
+    - name: Stop and Delete Container 
+      run: sudo docker stop bancoimobiliarioback-app-1; sudo docker rm bancoimobiliarioback-app-1
     
     - name: Delete old files with SSH
       run: ssh -i key.pem -o StrictHostKeyChecking=no ${{secrets.REMOTE_USER}}@${{secrets.REMOTE_HOST}} "rm -rf bancoImobiliarioBack"
